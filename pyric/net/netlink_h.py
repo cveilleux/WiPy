@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-
 """ netlink_h.py: port of netlink.h public header
 /*
  * netlink/netlink.h		Netlink Interface
@@ -45,35 +44,34 @@ __status__ = 'Production'
 
 import struct
 
-NETLINK_ROUTE          =  0	# Routing/device hook
-NETLINK_UNUSED         =  1	# Unused number
-NETLINK_USERSOCK       =  2	# Reserved for user mode socket protocols
-NETLINK_FIREWALL       =  3	# Unused number, formerly ip_queue
-NETLINK_SOCK_DIAG      =  4	# socket monitoring
-NETLINK_NFLOG          =  5	# netfilter/iptables ULOG
-NETLINK_XFRM           =  6	# ipsec
-NETLINK_SELINUX        =  7	# SELinux event notifications
-NETLINK_ISCSI		   =  8	# Open-iSCSI
-NETLINK_AUDIT          =  9	# auditing
-NETLINK_FIB_LOOKUP     = 10
-NETLINK_CONNECTOR      = 11
-NETLINK_NETFILTER      = 12	# netfilter subsystem
-NETLINK_IP6_FW         = 13
-NETLINK_DNRTMSG        = 14	# DECnet routing messages
-NETLINK_KOBJECT_UEVENT = 15	# Kernel messages to userspace
-NETLINK_GENERIC        = 16
+NETLINK_ROUTE = 0  # Routing/device hook
+NETLINK_UNUSED = 1  # Unused number
+NETLINK_USERSOCK = 2  # Reserved for user mode socket protocols
+NETLINK_FIREWALL = 3  # Unused number, formerly ip_queue
+NETLINK_SOCK_DIAG = 4  # socket monitoring
+NETLINK_NFLOG = 5  # netfilter/iptables ULOG
+NETLINK_XFRM = 6  # ipsec
+NETLINK_SELINUX = 7  # SELinux event notifications
+NETLINK_ISCSI = 8  # Open-iSCSI
+NETLINK_AUDIT = 9  # auditing
+NETLINK_FIB_LOOKUP = 10
+NETLINK_CONNECTOR = 11
+NETLINK_NETFILTER = 12  # netfilter subsystem
+NETLINK_IP6_FW = 13
+NETLINK_DNRTMSG = 14  # DECnet routing messages
+NETLINK_KOBJECT_UEVENT = 15  # Kernel messages to userspace
+NETLINK_GENERIC = 16
 #leave room for NETLINK_DM (DM Events)
-NETLINK_SCSITRANSPORT  = 18	# SCSI Transports
-NETLINK_ECRYPTFS       = 19
-NETLINK_RDMA           = 20
-NETLINK_CRYPTO         = 21	# Crypto layer
-__NETLINK_TYPE_MAX     = 22
-NETLINK_TYPE_MAX       = __NETLINK_TYPE_MAX - 1
+NETLINK_SCSITRANSPORT = 18  # SCSI Transports
+NETLINK_ECRYPTFS = 19
+NETLINK_RDMA = 20
+NETLINK_CRYPTO = 21  # Crypto layer
+__NETLINK_TYPE_MAX = 22
+NETLINK_TYPE_MAX = __NETLINK_TYPE_MAX - 1
 
 NETLINK_INET_DIAG = NETLINK_SOCK_DIAG
 
 MAX_LINKS = 32
-
 """
 struct nlmsghdr {
 	__u32		nlmsg_len;	 /* Length of message including header */
@@ -85,7 +83,9 @@ struct nlmsghdr {
 """
 nl_nlmsghdr = "IHHII"
 NLMSGHDRLEN = struct.calcsize(nl_nlmsghdr)
-def nlmsghdr(mlen,nltype,flags,seq,pid):
+
+
+def nlmsghdr(mlen, nltype, flags, seq, pid):
     """
      create a nlmsghdr
      :param mlen: length of message
@@ -95,27 +95,28 @@ def nlmsghdr(mlen,nltype,flags,seq,pid):
      :param pid: process port id
      :returns: packed netlink msg header
     """
-    return struct.pack(nl_nlmsghdr,NLMSGHDRLEN+mlen,nltype,flags,seq,pid)
+    return struct.pack(nl_nlmsghdr, NLMSGHDRLEN + mlen, nltype, flags, seq,
+                       pid)
+
 
 # Flags values
-NLM_F_REQUEST   =  1 # It is request message.
-NLM_F_MULTI     =  2 # Multipart message, terminated by NLMSG_DONE
-NLM_F_ACK       =  4 # Reply with ack, with zero or error code
-NLM_F_ECHO      =  8 # Echo this request
-NLM_F_DUMP_INTR = 16 # Dump was inconsistent due to sequence change
+NLM_F_REQUEST = 1  # It is request message.
+NLM_F_MULTI = 2  # Multipart message, terminated by NLMSG_DONE
+NLM_F_ACK = 4  # Reply with ack, with zero or error code
+NLM_F_ECHO = 8  # Echo this request
+NLM_F_DUMP_INTR = 16  # Dump was inconsistent due to sequence change
 
 # Modifiers to GET request
-NLM_F_ROOT   = 0x100 # specify tree	root
-NLM_F_MATCH  = 0x200 # return all matching
-NLM_F_ATOMIC = 0x400 # atomic GET
-NLM_F_DUMP   = (NLM_F_ROOT|NLM_F_MATCH)
+NLM_F_ROOT = 0x100  # specify tree	root
+NLM_F_MATCH = 0x200  # return all matching
+NLM_F_ATOMIC = 0x400  # atomic GET
+NLM_F_DUMP = (NLM_F_ROOT | NLM_F_MATCH)
 
 # Modifiers to NEW request
-NLM_F_REPLACE = 0x100 # Override existing
-NLM_F_EXCL    = 0x200 # Do not touch, if it exists
-NLM_F_CREATE  = 0x400 # Create, if it does not exist
-NLM_F_APPEND  = 0x800 # Add to end of list
-
+NLM_F_REPLACE = 0x100  # Override existing
+NLM_F_EXCL = 0x200  # Do not touch, if it exists
+NLM_F_CREATE = 0x400  # Create, if it does not exist
+NLM_F_APPEND = 0x800  # Add to end of list
 """
 /*
    4.4BSD ADD		NLM_F_CREATE|NLM_F_EXCL
@@ -139,18 +140,30 @@ NLM_F_APPEND  = 0x800 # Add to end of list
 #    +-------------------+- - -+- - - - - - - - +- - -+-------------------+- - -
 #     <---- NLMSG_HDRLEN -----> <- NLMSG_ALIGN(len) -> <---- NLMSG_HDRLEN ---
 NLMSG_ALIGNTO = 4
-def NLMSG_ALIGN(l): return (l+NLMSG_ALIGNTO-1) & ~(NLMSG_ALIGNTO-1)
-def NLMSG_LENGTH(l): return l+NLMSGHDRLEN
-def NLMSG_SPACE(l): return NLMSG_ALIGN(NLMSG_LENGTH(l))
-def NLMSG_ALIGNBY(l): return NLMSG_ALIGN(l) - l
 
-NLMSG_NOOP     = 0x1 # Nothing.
-NLMSG_ERROR    = 0x2 # Error
-NLMSG_DONE     = 0x3 # End of a dump
-NLMSG_OVERRUN  = 0x4 # Data lost
 
-NLMSG_MIN_TYPE = 0x10 # < 0x10: reserved control messages
+def NLMSG_ALIGN(l):
+    return (l + NLMSG_ALIGNTO - 1) & ~(NLMSG_ALIGNTO - 1)
 
+
+def NLMSG_LENGTH(l):
+    return l + NLMSGHDRLEN
+
+
+def NLMSG_SPACE(l):
+    return NLMSG_ALIGN(NLMSG_LENGTH(l))
+
+
+def NLMSG_ALIGNBY(l):
+    return NLMSG_ALIGN(l) - l
+
+
+NLMSG_NOOP = 0x1  # Nothing.
+NLMSG_ERROR = 0x2  # Error
+NLMSG_DONE = 0x3  # End of a dump
+NLMSG_OVERRUN = 0x4  # Data lost
+
+NLMSG_MIN_TYPE = 0x10  # < 0x10: reserved control messages
 """
 struct nlmsgerr {
 	int		error;
@@ -159,8 +172,10 @@ struct nlmsgerr {
 """
 nl_nlmsgerr = "hIHHII"
 NLMSGERRLEN = struct.calcsize(nl_nlmsgerr)
-NLMSGACKLEN = NLMSGHDRLEN + NLMSGERRLEN   # this is size of an error or ack message
-def nlmsgerr(error,mlen,nltype,flags,seq,pid):
+NLMSGACKLEN = NLMSGHDRLEN + NLMSGERRLEN  # this is size of an error or ack message
+
+
+def nlmsgerr(error, mlen, nltype, flags, seq, pid):
     """
      create a nlmsgerr
      NOTE: the function itself is here for illustrative purposes - users will
@@ -173,28 +188,28 @@ def nlmsgerr(error,mlen,nltype,flags,seq,pid):
      :param pid: process port id
      :returns: packed netlink msg error
     """
-    return struct.pack(nl_nlmsgerr,error,mlen,nltype,flags,seq,pid)
+    return struct.pack(nl_nlmsgerr, error, mlen, nltype, flags, seq, pid)
 
-NETLINK_ADD_MEMBERSHIP  = 1
+
+NETLINK_ADD_MEMBERSHIP = 1
 NETLINK_DROP_MEMBERSHIP = 2
-NETLINK_PKTINFO         = 3
+NETLINK_PKTINFO = 3
 NETLINK_BROADCAST_ERROR = 4
-NETLINK_NO_ENOBUFS      = 5
-NETLINK_RX_RING         = 6
-NETLINK_TX_RING         = 7
+NETLINK_NO_ENOBUFS = 5
+NETLINK_RX_RING = 6
+NETLINK_TX_RING = 7
 
 # nume nl_nmap_status
-NL_MMAP_STATUS_UNUSED   = 0
+NL_MMAP_STATUS_UNUSED = 0
 NL_MMAP_STATUS_RESERVED = 1
-NL_MMAP_STATUS_VALID    = 2
-NL_MMAP_STATUS_COPY     = 3
-NL_MMAP_STATUS_SKIP     = 4
+NL_MMAP_STATUS_VALID = 2
+NL_MMAP_STATUS_COPY = 3
+NL_MMAP_STATUS_SKIP = 4
 
-NET_MAJOR = 36 # Major 36 is reserved for networking
+NET_MAJOR = 36  # Major 36 is reserved for networking
 
 NETLINK_UNCONNECTED = 0
-NETLINK_CONNECTED   = 1
-
+NETLINK_CONNECTED = 1
 """
 /*
 * netlink/attr.h               Netlink Attributes
@@ -214,32 +229,32 @@ NETLINK_CONNECTED   = 1
  *  <-------------- nlattr->nla_len -------------->
  */
 """
-
 """
  I add two datatypes to the netlink definition:
  NLA_ERROR: designates an attribute that failed during unpacking
  NLA_SET_*: designates an array of like sized attributes Sets are similar to nested
   attributes but are not seperated by pad bytes.
 """
-NLA_DATATYPES = ['unspec','u8','u16','u32','u64','string','flag','msecs','nested',
-                 'set_u8','set_u16','set_u32','set_u64']
-NLA_ERROR      = -1 # my own -> failed to unpack attribute, treat as unspec
-NLA_UNSPEC     =  0	# Unspecified type, binary data chunk
-NLA_U8         =  1  # 8 bit integer
-NLA_U16        =  2	# 16 bit integer
-NLA_U32        =  3	# 32 bit integer
-NLA_U64        =  4	# 64 bit integer
-NLA_STRING     =  5	# NUL terminated character string
-NLA_FLAG       =  6	# Flag
-NLA_MSECS      =  7	# Micro seconds (64bit)
-NLA_NESTED     =  8	# Nested attributes
+NLA_DATATYPES = [
+    'unspec', 'u8', 'u16', 'u32', 'u64', 'string', 'flag', 'msecs', 'nested',
+    'set_u8', 'set_u16', 'set_u32', 'set_u64'
+]
+NLA_ERROR = -1  # my own -> failed to unpack attribute, treat as unspec
+NLA_UNSPEC = 0  # Unspecified type, binary data chunk
+NLA_U8 = 1  # 8 bit integer
+NLA_U16 = 2  # 16 bit integer
+NLA_U32 = 3  # 32 bit integer
+NLA_U64 = 4  # 64 bit integer
+NLA_STRING = 5  # NUL terminated character string
+NLA_FLAG = 6  # Flag
+NLA_MSECS = 7  # Micro seconds (64bit)
+NLA_NESTED = 8  # Nested attributes
 # the below are my own added to support nl80211 data like cipher_suites
-NLA_SET_U8     =  9 # set of u8s
-NLA_SET_U16    = 10 # set of u16s
-NLA_SET_U32    = 11 # set of u32s
-NLA_SET_U64    = 12 # set of u64s
-NLA_TYPE_MAX   =  NLA_SET_U64
-
+NLA_SET_U8 = 9  # set of u8s
+NLA_SET_U16 = 10  # set of u16s
+NLA_SET_U32 = 11  # set of u32s
+NLA_SET_U64 = 12  # set of u64s
+NLA_TYPE_MAX = NLA_SET_U64
 """
 struct nlattr {
 	__u16           nla_len; # length of attribute + nlattr size
@@ -248,14 +263,17 @@ struct nlattr {
 """
 nl_nlattrhdr = "HH"
 NLATTRHDRLEN = struct.calcsize(nl_nlattrhdr)
-def nlattrhdr(alen,atype):
+
+
+def nlattrhdr(alen, atype):
     """
      create a nlattr
      :param alen: length of attribute
      :param atype: type of attribute
      return packed netlink attribute
     """
-    return struct.pack(nl_nlattrhdr,alen+NLATTRHDRLEN,atype)
+    return struct.pack(nl_nlattrhdr, alen + NLATTRHDRLEN, atype)
+
 
 """
 /*
@@ -269,11 +287,11 @@ def nlattrhdr(alen,atype):
  * Note: The N and O flag are mutually exclusive.
  */
 """
-NLA_F_NESTED		= (1 << 15)
-NLA_F_NET_BYTEORDER	= (1 << 14)
-NLA_TYPE_MASK		= ~(NLA_F_NESTED | NLA_F_NET_BYTEORDER)
+NLA_F_NESTED = (1 << 15)
+NLA_F_NET_BYTEORDER = (1 << 14)
+NLA_TYPE_MASK = ~(NLA_F_NESTED | NLA_F_NET_BYTEORDER)
 
 # defined error codes
 # only use success and failure -> using errno for other error numbers
-NLE_SUCCESS           =  0
-NLE_FAILURE           =  1
+NLE_SUCCESS = 0
+NLE_FAILURE = 1

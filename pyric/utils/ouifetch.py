@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-
 """ ouifetch.py: IEEE oui helper
 
 Copyright (C) 2016  Dale V. Patterson (wraith.wireless@yandex.com)
@@ -49,11 +48,13 @@ except ImportError:
     from urllib.request import urlopen as url_open
     # noinspection PyUnresolvedReferences
     from urllib import error as url_error
-import os,sys,datetime,time
+import os, sys, datetime, time
 import pyric
 
 OUIURL = 'http://standards-oui.ieee.org/oui.txt'
-OUIPATH = os.path.join(os.path.dirname(os.path.abspath(__file__)),'data/oui.txt')
+OUIPATH = os.path.join(
+    os.path.dirname(os.path.abspath(__file__)), 'data/oui.txt')
+
 
 def load(opath=None):
     """
@@ -69,18 +70,19 @@ def load(opath=None):
     try:
         fin = open(opath)
         for line in fin.readlines()[1:]:
-            o,m = line.strip().split('\t')
+            o, m = line.strip().split('\t')
             ouis[o.lower()] = m[0:100]
         fin.close()
     except IndexError:
         pass
     except IOError as e:
-        raise pyric.error(e.errno,e.strerror)
+        raise pyric.error(e.errno, e.strerror)
     finally:
         if fin and not fin.closed: fin.close()
     return ouis
 
-def fetch(opath=None,verbose=False):
+
+def fetch(opath=None, verbose=False):
     """
      retrieves oui.txt from IEEE and writes to data file
      :param opath: fullpath of oui.txt
@@ -97,7 +99,8 @@ def fetch(opath=None,verbose=False):
 
     # set up url request
     req = url_request(OUIURL)
-    req.add_header('User-Agent',"PyRIC +https://github.com/wraith-wireless/PyRIC/")
+    req.add_header('User-Agent',
+                   "PyRIC +https://github.com/wraith-wireless/PyRIC/")
     try:
         # retrieve the oui file and parse out generated date
         if verbose: print('Fetching ', OUIURL)
@@ -105,9 +108,10 @@ def fetch(opath=None,verbose=False):
         if verbose: print("Parsing OUI file")
 
         if verbose: print("Opening data file {0} for writing".format(opath))
-        fout = open(opath,'w')
-        gen = datetime.datetime.utcnow().isoformat() # use current time as the first line
-        fout.write(gen+'\n')
+        fout = open(opath, 'w')
+        gen = datetime.datetime.utcnow().isoformat(
+        )  # use current time as the first line
+        fout.write(gen + '\n')
 
         # pull out ouis
         t = time.time()
@@ -115,17 +119,17 @@ def fetch(opath=None,verbose=False):
         for l in res:
             if '(hex)' in l:
                 # extract oui and manufacturer
-                oui,manuf = l.split('(hex)')
-                oui = oui.strip().replace('-',':')
+                oui, manuf = l.split('(hex)')
+                oui = oui.strip().replace('-', ':')
                 manuf = manuf.strip()
                 if manuf.startswith("IEEE REGISTRATION AUTHORITY"):
                     manuf = "IEEE REGISTRATION AUTHORITY"
 
                 # write to file & update count
-                fout.write('{0}\t{1}\n'.format(oui,manuf))
+                fout.write('{0}\t{1}\n'.format(oui, manuf))
                 cnt += 1
-                if verbose: print("{0}:\t{1}\t{2}".format(cnt,oui,manuf))
-        print("Wrote {0} OUIs in {1:.3} secs".format(cnt,time.time()-t))
+                if verbose: print("{0}:\t{1}\t{2}".format(cnt, oui, manuf))
+        print("Wrote {0} OUIs in {1:.3} secs".format(cnt, time.time() - t))
     except url_error as e:
         print("Error fetching oui file: {0}".format(e))
     except IOError as e:
@@ -134,6 +138,7 @@ def fetch(opath=None,verbose=False):
         print("Error parsing oui file: {0}".format(e))
     finally:
         if fout: fout.close()
+
 
 #if __name__ == '__main__':
 #    # create arg parser and parse command line args
@@ -146,5 +151,5 @@ def fetch(opath=None,verbose=False):
 #    verbose = args.verbose
 #    path = args.path
 
-    # execute
+# execute
 #    fetch(path,verbose)

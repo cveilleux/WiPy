@@ -32,7 +32,6 @@ __author__ = 'Dale Patterson'
 __maintainer__ = 'Dale Patterson'
 __email__ = 'wraith.wireless@yandex.com'
 __status__ = 'Production'
-
 """
  cipher suite selectors - decided to (over)document this because it was such a
  hassle to figure out, want to make sure I can come back at a later date and
@@ -90,42 +89,38 @@ __status__ = 'Production'
 
 """
 #WLAN_CIPHER_SUITE_LEN = 4
-WLAN_CIPHER_SUITE_GROUP    = 0x000fac00
-WLAN_CIPHER_SUITE_WEP40    = 0x000fac01
-WLAN_CIPHER_SUITE_TKIP     = 0x000fac02
-WLAN_CIPHER_SUITE_CCMP     = 0x000fac04
-WLAN_CIPHER_SUITE_WEP104   = 0x000fac05
+WLAN_CIPHER_SUITE_GROUP = 0x000fac00
+WLAN_CIPHER_SUITE_WEP40 = 0x000fac01
+WLAN_CIPHER_SUITE_TKIP = 0x000fac02
+WLAN_CIPHER_SUITE_CCMP = 0x000fac04
+WLAN_CIPHER_SUITE_WEP104 = 0x000fac05
 WLAN_CIPHER_SUITE_ACS_CMAC = 0x000fac06
-WLAN_CIPHER_SUITE_GCMP     = 0x000fac08
-WLAN_CIPHER_SUITE_SMS4     = 0x00147201
+WLAN_CIPHER_SUITE_GCMP = 0x000fac08
+WLAN_CIPHER_SUITE_SMS4 = 0x00147201
 WLAN_CIPHER_SUITE_SELECTORS = {
-    WLAN_CIPHER_SUITE_GROUP:'GROUP',
-    WLAN_CIPHER_SUITE_WEP40:'WEP-40',
-    WLAN_CIPHER_SUITE_TKIP:'TKIP',
-    WLAN_CIPHER_SUITE_CCMP:'CCMP',
-    WLAN_CIPHER_SUITE_WEP104:'WEP-104',
-    WLAN_CIPHER_SUITE_ACS_CMAC:'AES-CMAC',
-    WLAN_CIPHER_SUITE_GCMP:'GCMP',
-    WLAN_CIPHER_SUITE_SMS4:'SMS4'
+    WLAN_CIPHER_SUITE_GROUP: 'GROUP',
+    WLAN_CIPHER_SUITE_WEP40: 'WEP-40',
+    WLAN_CIPHER_SUITE_TKIP: 'TKIP',
+    WLAN_CIPHER_SUITE_CCMP: 'CCMP',
+    WLAN_CIPHER_SUITE_WEP104: 'WEP-104',
+    WLAN_CIPHER_SUITE_ACS_CMAC: 'AES-CMAC',
+    WLAN_CIPHER_SUITE_GCMP: 'GCMP',
+    WLAN_CIPHER_SUITE_SMS4: 'SMS4'
 }
-
 """ COV Class Limits IAW Std Table 8-56 """
-COV_CLASS_MIN =  0
+COV_CLASS_MIN = 0
 COV_CLASS_MAX = 31
-
 """
  Retry (short and long) Limits IAW Std dot11ShortRetryLimit pg 2133 and
  dot11LongRetryLimit pg 2134
 """
 RETRY_MIN = 1
 RETRY_MAX = 255
-
 """ RTS THRESH limits IAW Std dot11RTSTHRESH definition pg 2133 """
 RTS_THRESH_MIN = 0
 RTS_THRESH_MAX = 65536
-RTS_THRESH_OFF = 4294967295 #(2^32 -1 or the max value of a u32)
-
+RTS_THRESH_OFF = 4294967295  #(2^32 -1 or the max value of a u32)
 """ Fragmentation THRESH limits IAW Std dot11FragmentTHRESH def. pg 2133 """
 FRAG_THRESH_MIN = 256
 FRAG_THRESH_MAX = 8000
-FRAG_THRESH_OFF = 4294967295 #(2^32 -1 or the max value of a u32)
+FRAG_THRESH_OFF = 4294967295  #(2^32 -1 or the max value of a u32)

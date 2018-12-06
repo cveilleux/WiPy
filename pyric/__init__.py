@@ -45,7 +45,6 @@ __author__ = 'Dale Patterson'
 __maintainer__ = 'Dale Patterson'
 __email__ = 'wraith.wireless@yandex.com'
 __status__ = 'Production'
-
 """
  define pyric exceptions
   all exceptions are tuples t=(error code,error message)
@@ -54,13 +53,16 @@ __status__ = 'Production'
   error handling i.e modules using pyric.error do not need to call pyric.EUNDEF
   and errno.EINVAL but can call pyric.EUNDEF and pyric.EINVAL
 """
-EUNDEF = -1                   # undefined error
-from errno import *           # make all errno errors pyric errors
+EUNDEF = -1  # undefined error
+from errno import *  # make all errno errors pyric errors
 errorcode[EUNDEF] = "EUNDEF"  # add ours to errorcode dicts
+
+
 class error(EnvironmentError):
-    def __init__(self,errno,errmsg=None):
+    def __init__(self, errno, errmsg=None):
         if not errmsg: errmsg = strerror(errno)
-        EnvironmentError.__init__(self,errno,errmsg)
+        EnvironmentError.__init__(self, errno, errmsg)
+
 
 def strerror(errno):
     """
@@ -74,9 +76,11 @@ def strerror(errno):
     elif errno == EBUSY:
         msg = "{0}. Make sure Card is up and no other devices share the same phy"
         return msg.format(os.strerror(EBUSY))
-    elif errno == ENFILE: return "There are no available netlink sockets"
+    elif errno == ENFILE:
+        return "There are no available netlink sockets"
     else:
         return os.strerror(errno)
+
 
 # for setup.py use
 # redefine version for easier access

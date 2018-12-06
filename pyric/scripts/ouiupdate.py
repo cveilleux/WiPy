@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-
 """ ouiupdate.py: get ouis data from IEEE
 
 Copyright (C) 2016  Dale V. Patterson (wraith.wireless@yandex.com)
@@ -41,12 +40,19 @@ if __name__ == '__main__':
     # create arg parser and parse command line args
     print("IEEE OUI Fetch")
     argp = ap.ArgumentParser(description="IEEE OUI fetch and parse")
-    argp.add_argument('-p','--path',help="Path to write parsed file")
-    argp.add_argument('-v','--verbose',action='store_true',help="Display operations to stdout")
-    argp.add_argument('--version',action='version',version="OUI Fetch {0}".format(__version__))
+    argp.add_argument('-p', '--path', help="Path to write parsed file")
+    argp.add_argument(
+        '-v',
+        '--verbose',
+        action='store_true',
+        help="Display operations to stdout")
+    argp.add_argument(
+        '--version',
+        action='version',
+        version="OUI Fetch {0}".format(__version__))
     args = argp.parse_args()
     verbose = args.verbose
     path = args.path
 
     # execute
-    ouifetch.fetch(path,verbose)
+    ouifetch.fetch(path, verbose)

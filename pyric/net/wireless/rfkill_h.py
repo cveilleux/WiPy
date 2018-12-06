@@ -62,9 +62,8 @@ __status__ = 'Production'
 import struct
 
 RFKILL_STATE_SOFT_BLOCKED = 0
-RFKILL_STATE_UNBLOCKED    = 1
+RFKILL_STATE_UNBLOCKED = 1
 RFKILL_STATE_HARD_BLOCKED = 2
-
 """
 /**
  * enum rfkill_type - type of rfkill switch.
@@ -81,18 +80,19 @@ RFKILL_STATE_HARD_BLOCKED = 2
  * @NUM_RFKILL_TYPES: number of defined rfkill types
  */
 """
-RFKILL_TYPES = ['all','wlan','bluetooth','uwb','wimax','wwan','gps','fm','nfc']
-RFKILL_TYPE_ALL       = 0
-RFKILL_TYPE_WLAN      = 1
+RFKILL_TYPES = [
+    'all', 'wlan', 'bluetooth', 'uwb', 'wimax', 'wwan', 'gps', 'fm', 'nfc'
+]
+RFKILL_TYPE_ALL = 0
+RFKILL_TYPE_WLAN = 1
 RFKILL_TYPE_BLUETOOTH = 2
-RFKILL_TYPE_UWB       = 3
-RFKILL_TYPE_WIMAX     = 4
-RFKILL_TYPE_WWAN      = 5
-RFKILL_TYPE_GPS       = 6
-RFKILL_TYPE_FM        = 7
-RFKILL_TYPE_NFC       = 8
-NUM_RFKILL_TYPES      = 9
-
+RFKILL_TYPE_UWB = 3
+RFKILL_TYPE_WIMAX = 4
+RFKILL_TYPE_WWAN = 5
+RFKILL_TYPE_GPS = 6
+RFKILL_TYPE_FM = 7
+RFKILL_TYPE_NFC = 8
+NUM_RFKILL_TYPES = 9
 """
 /**
  * enum rfkill_operation - operation types
@@ -102,11 +102,10 @@ NUM_RFKILL_TYPES      = 9
  * @RFKILL_OP_CHANGE_ALL: userspace changes all devices (of a type, or all)
  */
  """
-RFKILL_OP_ADD        = 0
-RFKILL_OP_DEL        = 1
-RFKILL_OP_CHANGE     = 2
+RFKILL_OP_ADD = 0
+RFKILL_OP_DEL = 1
+RFKILL_OP_CHANGE = 2
 RFKILL_OP_CHANGE_ALL = 3
-
 """
 /**
  * struct rfkill_event - events for userspace on /dev/rfkill
@@ -122,7 +121,9 @@ RFKILL_OP_CHANGE_ALL = 3
 """
 rfk_rfkill_event = "IBBBB"
 RFKILLEVENTLEN = struct.calcsize(rfk_rfkill_event)
-def rfkill_event(idx,rtype,op,hard=0,soft=0):
+
+
+def rfkill_event(idx, rtype, op, hard=0, soft=0):
     """
      create a rkfill event structure
      :param idx: index of dev rfkill i.e. 0,1
@@ -132,4 +133,4 @@ def rfkill_event(idx,rtype,op,hard=0,soft=0):
      :param soft: soft state one of {0=unblocked|1=blocked}
      :returns: a rfkill event structure
     """
-    return struct.pack(rfk_rfkill_event,idx,rtype,op,hard,soft)
+    return struct.pack(rfk_rfkill_event, idx, rtype, op, hard, soft)

@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-
 """ hardware.py: device related utility functions
 
 Copyright (C) 2016  Dale V. Patterson (wraith.wireless@yandex.com)
@@ -36,8 +35,9 @@ __status__ = 'Production'
 import os
 import random
 
-dpath = '/proc/net/dev' # system device details
-drvpath = '/sys/class/net/{0}/device/driver/module/drivers' # format w/ device name
+dpath = '/proc/net/dev'  # system device details
+drvpath = '/sys/class/net/{0}/device/driver/module/drivers'  # format w/ device name
+
 
 def oui(mac):
     """
@@ -46,6 +46,7 @@ def oui(mac):
     """
     return mac[:8]
 
+
 def ulm(mac):
     """
     :param mac:
@@ -53,7 +54,8 @@ def ulm(mac):
     """
     return mac[9:]
 
-def manufacturer(ouis,mac):
+
+def manufacturer(ouis, mac):
     """
      returns the manufacturer of the mac address if exists, otherwise 'unknown'
      :param ouis: oui dict
@@ -65,6 +67,7 @@ def manufacturer(ouis,mac):
     except KeyError:
         return "unknown"
 
+
 def randhw(ouis=None):
     """
      generate a random hw address
@@ -72,11 +75,13 @@ def randhw(ouis=None):
      :returns: random hw address
     """
     if ouis is None or ouis == []:
-        o = ":".join(['{0:02x}'.format(random.randint(0,255)) for _ in range(3)])
+        o = ":".join(
+            ['{0:02x}'.format(random.randint(0, 255)) for _ in range(3)])
     else:
         o = random.choice(ouis.keys())
-    u = ":".join(['{0:02x}'.format(random.randint(0,255)) for _ in range(3)])
+    u = ":".join(['{0:02x}'.format(random.randint(0, 255)) for _ in range(3)])
     return o + ':' + u
+
 
 def ifcard(dev):
     """
@@ -85,7 +90,8 @@ def ifcard(dev):
      :returns: tuple t = (driver,chipset)
     """
     driver = ifdriver(dev)
-    return driver,ifchipset(driver)
+    return driver, ifchipset(driver)
+
 
 def ifdriver(dev):
     """
@@ -100,6 +106,7 @@ def ifdriver(dev):
         return ds[0].split(':')[1]
     except OSError:
         return "Unknown"
+
 
 def ifchipset(driver):
     """
@@ -129,12 +136,15 @@ def ifchipset(driver):
     if driver == "rt2500" or driver == "rt2500pci": return "Ralink 2560 PCI"
     if driver == "rt61" or driver == "rt61pci": return "Ralink 2561 PCI"
     if driver == "rt73" or driver == "rt73usb": return "Ralink 2573 USB"
-    if driver == "rt2800" or driver == "rt2800usb" or driver == "rt3070sta": return "Ralink RT2870/3070"
+    if driver == "rt2800" or driver == "rt2800usb" or driver == "rt3070sta":
+        return "Ralink RT2870/3070"
     if driver == "ipw2100": return "Intel 2100B"
     if driver == "ipw2200": return "Intel 2200BG/2915ABG"
-    if driver == "ipw3945" or driver == "ipwraw" or driver == "iwl3945": return "Intel 3945ABG"
+    if driver == "ipw3945" or driver == "ipwraw" or driver == "iwl3945":
+        return "Intel 3945ABG"
     if driver == "ipw4965" or driver == "iwl4965": return "Intel 4965AGN"
-    if driver == "iwlagn" or driver == "iwlwifi": return "Intel 4965/5xxx/6xxx/1xxx"
+    if driver == "iwlagn" or driver == "iwlwifi":
+        return "Intel 4965/5xxx/6xxx/1xxx"
     if driver == "orinoco": return "Hermes/Prism"
     if driver == "wl12xx": return "TI WL1251/WL1271"
     if driver == "r871x_usb_drv": return "Realtek 81XX"

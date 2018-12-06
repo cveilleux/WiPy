@@ -38,21 +38,26 @@ import struct
 import errno
 from fcntl import ioctl
 
-class error(EnvironmentError): pass
+
+class error(EnvironmentError):
+    pass
+
 
 def io_socket_alloc():
     """
      create a socket for ioctl calls
      :returns: an io socket
     """
-    return socket.socket(socket.AF_INET,socket.SOCK_DGRAM)
+    return socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+
 
 def io_socket_free(iosock):
     """ close the socket """
     if iosock: iosock.close()
     return None
 
-def io_transfer(iosock,flag,ifreq):
+
+def io_transfer(iosock, flag, ifreq):
     """
      send & recieve an ifreq struct
      :param iosock: io socket
@@ -61,18 +66,18 @@ def io_transfer(iosock,flag,ifreq):
      :returns: an the ifreq struct recieved
     """
     try:
-        return ioctl(iosock.fileno(),flag,ifreq)
-    except (AttributeError,struct.error) as e:
+        return ioctl(iosock.fileno(), flag, ifreq)
+    except (AttributeError, struct.error) as e:
         # either sock is not valid or a bad value passed to ifreq
-        if e.message.find('fileno'): raise error(errno.ENOTSOCK,"Bad socket")
-        else: raise error(errno.EINVAL,e)
+        if e.message.find('fileno'): raise error(errno.ENOTSOCK, "Bad socket")
+        else: raise error(errno.EINVAL, e)
     except IOError as e:
         # generally device cannot be found sort but can also be
         # permissions etc, catch and reraise as our own
-        if e.errno is not None: # just in case we have a none 2-tuple error
-            raise error(e.errno,e.strerror)
+        if e.errno is not None:  # just in case we have a none 2-tuple error
+            raise error(e.errno, e.strerror)
         else:
-            raise error(-1,e)
+            raise error(-1, e)
     except Exception as e:
         # blanket catchall
-        raise error(-1,e.args[0])
+        raise error(-1, e.args[0])

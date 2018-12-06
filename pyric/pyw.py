@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-
 """ pyw.py: Linux wireless library for the Python Wireless Developer and Pentester
 
 Copyright (C) 2016  Dale V. Patterson (wraith.wireless@yandex.com)
@@ -79,22 +78,22 @@ __maintainer__ = 'Dale Patterson'
 __email__ = 'wraith.wireless@yandex.com'
 __status__ = 'Production'
 
-import struct                                   # ioctl unpacking
-import re                                       # check addr validity
-import pyric                                    # pyric exception
-from pyric.nlhelp.nlsearch import cmdbynum      # get command name
-import pyric.utils.channels as channels         # channel related
-import pyric.utils.rfkill as rfkill             # block/unblock
-import pyric.utils.hardware as hw               # device related
-import pyric.utils.ouifetch as ouifetch         # get oui dict
-import pyric.net.netlink_h as nlh               # netlink definition
-import pyric.net.genetlink_h as genlh           # genetlink definition
-import pyric.net.wireless.nl80211_h as nl80211h # nl80211 definition
-import pyric.lib.libnl as nl                    # netlink (library) functions
-import pyric.net.wireless.wlan as wlan          # IEEE 802.11 Std definition
-import pyric.net.sockios_h as sioch             # sockios constants
-import pyric.net.if_h as ifh                    # ifreq structure
-import pyric.lib.libio as io                    # ioctl (library) functions
+import struct  # ioctl unpacking
+import re  # check addr validity
+import pyric  # pyric exception
+from pyric.nlhelp.nlsearch import cmdbynum  # get command name
+import pyric.utils.channels as channels  # channel related
+import pyric.utils.rfkill as rfkill  # block/unblock
+import pyric.utils.hardware as hw  # device related
+import pyric.utils.ouifetch as ouifetch  # get oui dict
+import pyric.net.netlink_h as nlh  # netlink definition
+import pyric.net.genetlink_h as genlh  # genetlink definition
+import pyric.net.wireless.nl80211_h as nl80211h  # nl80211 definition
+import pyric.lib.libnl as nl  # netlink (library) functions
+import pyric.net.wireless.wlan as wlan  # IEEE 802.11 Std definition
+import pyric.net.sockios_h as sioch  # sockios constants
+import pyric.net.if_h as ifh  # ifreq structure
+import pyric.lib.libio as io  # ioctl (library) functions
 import os
 
 _FAM80211ID_ = None
@@ -107,6 +106,7 @@ TXPWRSETTINGS = nl80211h.NL80211_TX_POWER_SETTINGS
 ################################################################################
 #### WIRELESS CORE                                                          ####
 ################################################################################
+
 
 def interfaces():
     """
@@ -128,6 +128,7 @@ def interfaces():
     # the remaining lines are <dev>: p1 p2 ... p3, split on ':' & strip whitespace
     return [d.split(':')[0].strip() for d in ds]
 
+
 def isinterface(dev):
     """
     Determines if device name belongs to a network card (APX ifconfig <dev>)
@@ -136,6 +137,7 @@ def isinterface(dev):
     :returns: {True if dev is a device|False otherwise}
     """
     return dev in interfaces()
+
 
 def winterfaces(iosock=None):
     """
@@ -150,6 +152,7 @@ def winterfaces(iosock=None):
     for dev in interfaces():
         if iswireless(dev, iosock): wifaces.append(dev)
     return wifaces
+
 
 def iswireless(dev, iosock=None):
     """
@@ -170,6 +173,7 @@ def iswireless(dev, iosock=None):
     except io.error:
         return False
 
+
 def phylist():
     """
     Use rfkill to return all phys of wireless devices
@@ -185,21 +189,25 @@ def phylist():
         rfdevs = rfkill.rfkill_list()
         for rfk in rfdevs:
             if rfdevs[rfk]['type'] == 'wlan':
-                phys.append((int(rfk.split('phy')[1]),rfk))
+                phys.append((int(rfk.split('phy')[1]), rfk))
     except IOError as e:
         #catch 'No such file or directory' errors when rfkill is not supported
         if e.errno == pyric.ENOENT:
             try:
                 rfdevs = os.listdir(rfkill.ipath)
             except OSError:
-                emsg = "{} is not a directory & rfkill is not supported".format(rfkill.ipath)
-                raise pyric.error(pyric.ENOTDIR,emsg)
+                emsg = "{} is not a directory & rfkill is not supported".format(
+                    rfkill.ipath)
+                raise pyric.error(pyric.ENOTDIR, emsg)
             else:
-                for rfk in rfdevs: phys.append((int(rfk.split('phy')[1]),rfk))
+                for rfk in rfdevs:
+                    phys.append((int(rfk.split('phy')[1]), rfk))
         else:
-            raise pyric.error(pyric.EUNDEF,
-                              "PHY listing failed: {}-{}".format(e.errno,e.strerror))
+            raise pyric.error(
+                pyric.EUNDEF, "PHY listing failed: {}-{}".format(
+                    e.errno, e.strerror))
     return phys
+
 
 def regget(nlsock=None):
     """
@@ -211,14 +219,16 @@ def regget(nlsock=None):
     if nlsock is None: return _nlstub_(regget)
 
     try:
-        msg = nl.nlmsg_new(nltype=_familyid_(nlsock),
-                           cmd=nl80211h.NL80211_CMD_GET_REG,
-                           flags=nlh.NLM_F_REQUEST | nlh.NLM_F_ACK)
+        msg = nl.nlmsg_new(
+            nltype=_familyid_(nlsock),
+            cmd=nl80211h.NL80211_CMD_GET_REG,
+            flags=nlh.NLM_F_REQUEST | nlh.NLM_F_ACK)
         nl.nl_sendmsg(nlsock, msg)
         rmsg = nl.nl_recvmsg(nlsock)
     except nl.error as e:
         raise pyric.error(e.errno, e.strerror)
     return nl.nla_find(rmsg, nl80211h.NL80211_ATTR_REG_ALPHA2)
+
 
 def regset(rd, nlsock=None):
     """
@@ -232,18 +242,21 @@ def regset(rd, nlsock=None):
     if nlsock is None: return _nlstub_(regset, rd)
 
     try:
-        msg = nl.nlmsg_new(nltype=_familyid_(nlsock),
-                           cmd=nl80211h.NL80211_CMD_REQ_SET_REG,
-                           flags=nlh.NLM_F_REQUEST | nlh.NLM_F_ACK)
+        msg = nl.nlmsg_new(
+            nltype=_familyid_(nlsock),
+            cmd=nl80211h.NL80211_CMD_REQ_SET_REG,
+            flags=nlh.NLM_F_REQUEST | nlh.NLM_F_ACK)
         nl.nla_put_string(msg, rd.upper(), nl80211h.NL80211_ATTR_REG_ALPHA2)
         nl.nl_sendmsg(nlsock, msg)
         _ = nl.nl_recvmsg(nlsock)
     except nl.error as e:
         raise pyric.error(e.errno, e.strerror)
 
+
 ################################################################################
 #### CARD RELATED ####
 ################################################################################
+
 
 class Card(tuple):
     """
@@ -254,17 +267,27 @@ class Card(tuple):
         dev: device name
         idx: interface index (ifindex)
     """
+
     # noinspection PyInitNewSignature
     def __new__(cls, p, d, i):
         return super(Card, cls).__new__(cls, tuple((p, d, i)))
+
     def __repr__(self):
-        return "Card(phy={0},dev={1},ifindex={2})".format(self.phy,self.dev,self.idx)
+        return "Card(phy={0},dev={1},ifindex={2})".format(
+            self.phy, self.dev, self.idx)
+
     @property
-    def phy(self): return self[0]
+    def phy(self):
+        return self[0]
+
     @property
-    def dev(self): return self[1]
+    def dev(self):
+        return self[1]
+
     @property
-    def idx(self): return self[2]
+    def idx(self):
+        return self[2]
+
 
 def getcard(dev, nlsock=None):
     """
@@ -276,6 +299,7 @@ def getcard(dev, nlsock=None):
     """
     if nlsock is None: return _nlstub_(getcard, dev)
     return devinfo(dev, nlsock)['card']
+
 
 def validcard(card, nlsock=None):
     """
@@ -293,9 +317,11 @@ def validcard(card, nlsock=None):
         if e.errno == pyric.ENODEV: return False
         else: raise
 
+
 ################################################################################
 #### ADDRESS RELATED                                                        ####
 ################################################################################
+
 
 def macget(card, iosock=None):
     """
@@ -311,16 +337,20 @@ def macget(card, iosock=None):
         flag = sioch.SIOCGIFHWADDR
         ret = io.io_transfer(iosock, flag, ifh.ifreq(card.dev, flag))
         fam = struct.unpack_from(ifh.sa_addr, ret, ifh.IFNAMELEN)[0]
-        if fam in [ifh.ARPHRD_ETHER, ifh.AF_UNSPEC,ifh.ARPHRD_IEEE80211_RADIOTAP]:
+        if fam in [
+                ifh.ARPHRD_ETHER, ifh.AF_UNSPEC, ifh.ARPHRD_IEEE80211_RADIOTAP
+        ]:
             return _hex2mac_(ret[18:24])
         else:
-            raise pyric.error(pyric.EAFNOSUPPORT, "Invalid return hwaddr family")
+            raise pyric.error(pyric.EAFNOSUPPORT,
+                              "Invalid return hwaddr family")
     except AttributeError as e:
         raise pyric.error(pyric.EINVAL, e)
     except struct.error as e:
         raise pyric.error(pyric.EUNDEF, "Error parsing results: {0}".format(e))
     except io.error as e:
         raise pyric.error(e.errno, e.strerror)
+
 
 def macset(card, mac, iosock=None):
     """
@@ -332,23 +362,28 @@ def macset(card, mac, iosock=None):
     :returns True on success, False otherwise
     .. warning:: Requires root privileges
     """
-    if not _validmac_(mac): raise pyric.error(pyric.EINVAL, "Invalid mac address")
+    if not _validmac_(mac):
+        raise pyric.error(pyric.EINVAL, "Invalid mac address")
     if iosock is None: return _iostub_(macset, card, mac)
 
     try:
         flag = sioch.SIOCSIFHWADDR
         ret = io.io_transfer(iosock, flag, ifh.ifreq(card.dev, flag, [mac]))
         fam = struct.unpack_from(ifh.sa_addr, ret, ifh.IFNAMELEN)[0]
-        if fam in [ifh.ARPHRD_ETHER, ifh.AF_UNSPEC, ifh.ARPHRD_IEEE80211_RADIOTAP]:
+        if fam in [
+                ifh.ARPHRD_ETHER, ifh.AF_UNSPEC, ifh.ARPHRD_IEEE80211_RADIOTAP
+        ]:
             return _hex2mac_(ret[18:24]) == mac
         else:
-            raise pyric.error(pyric.EAFNOSUPPORT, "Invalid return hwaddr family")
+            raise pyric.error(pyric.EAFNOSUPPORT,
+                              "Invalid return hwaddr family")
     except AttributeError as e:
         raise pyric.error(pyric.EINVAL, e)
     except struct.error as e:
         raise pyric.error(pyric.EUNDEF, "Error parsing results: {0}".format(e))
     except io.error as e:
         raise pyric.error(e.errno, e.strerror)
+
 
 def ifaddrget(card, iosock=None):
     """
@@ -377,7 +412,8 @@ def ifaddrget(card, iosock=None):
         if fam == ifh.AF_INET:
             mask = _hex2ip4_(ret[20:24])
         else:
-            raise pyric.error(pyric.EAFNOSUPPORT, "Invalid return netmask family")
+            raise pyric.error(pyric.EAFNOSUPPORT,
+                              "Invalid return netmask family")
 
         # broadcast
         flag = sioch.SIOCGIFBRDADDR
@@ -386,7 +422,8 @@ def ifaddrget(card, iosock=None):
         if fam == ifh.AF_INET:
             bcast = _hex2ip4_(ret[20:24])
         else:
-            raise pyric.error(pyric.EAFNOSUPPORT, "Invalid return broadcast family")
+            raise pyric.error(pyric.EAFNOSUPPORT,
+                              "Invalid return broadcast family")
     except AttributeError as e:
         raise pyric.error(pyric.EINVAL, e)
     except struct.error as e:
@@ -398,6 +435,7 @@ def ifaddrget(card, iosock=None):
         raise pyric.error(e.errno, e.strerror)
 
     return inet, mask, bcast
+
 
 def ifaddrset(card, inet=None, mask=None, bcast=None, iosock=None):
     """
@@ -452,6 +490,7 @@ def ifaddrset(card, inet=None, mask=None, bcast=None, iosock=None):
     except struct.error as e:
         raise pyric.error(pyric.EUNDEF, "Error parsing results: {0}".format(e))
 
+
 def inetset(card, inet, iosock=None):
     """
     Set nic's ip4 addr  (ifconfig <card.dev> <inet>
@@ -481,6 +520,7 @@ def inetset(card, inet, iosock=None):
     except io.error as e:
         raise pyric.error(e.errno, e.strerror)
 
+
 def maskset(card, mask, iosock=None):
     """
     Set nic's ip4 netmask (ifconfig <card.dev> netmask <netmask>
@@ -502,7 +542,8 @@ def maskset(card, mask, iosock=None):
         if fam == ifh.AF_INET:
             return _hex2ip4_(ret[20:24]) == mask
         else:
-            raise pyric.error(pyric.EAFNOSUPPORT, "Invalid return netmask family")
+            raise pyric.error(pyric.EAFNOSUPPORT,
+                              "Invalid return netmask family")
     except AttributeError as e:
         raise pyric.error(pyric.EINVAL, e)
     except struct.error as e:
@@ -514,6 +555,7 @@ def maskset(card, mask, iosock=None):
             raise pyric.error(pyric.EINVAL, "Cannot set netmask. Set ip first")
         else:
             raise pyric.error(e, e.strerror)
+
 
 def bcastset(card, bcast, iosock=None):
     """
@@ -529,7 +571,7 @@ def bcastset(card, bcast, iosock=None):
             broadcast = 10.0.0.31.
     .. warning:: Requires root privileges
     """
-    if not _validip4_(bcast):  raise pyric.error(pyric.EINVAL, "Invalid bcast")
+    if not _validip4_(bcast): raise pyric.error(pyric.EINVAL, "Invalid bcast")
     if iosock is None: return _iostub_(bcastset, card, bcast)
 
     # we have to do one at a time
@@ -540,12 +582,14 @@ def bcastset(card, bcast, iosock=None):
         if fam == ifh.AF_INET:
             return _hex2ip4_(ret[20:24]) == bcast
         else:
-            raise pyric.error(pyric.EAFNOSUPPORT, "Invalid return broadcast family")
+            raise pyric.error(pyric.EAFNOSUPPORT,
+                              "Invalid return broadcast family")
     except pyric.error as e:
         # an ambiguous error is thrown if attempting to set netmask or broadcast
         # without an ip address already set on the card
         if e.errno == pyric.EADDRNOTAVAIL:
-            raise pyric.error(pyric.EINVAL, "Cannot set broadcast. Set ip first")
+            raise pyric.error(pyric.EINVAL,
+                              "Cannot set broadcast. Set ip first")
         else:
             raise
     except AttributeError as e:
@@ -556,13 +600,16 @@ def bcastset(card, bcast, iosock=None):
         # an ambiguous error is thrown if attempting to set netmask or broadcast
         # without an ip address already set on the card
         if e.errno == pyric.EADDRNOTAVAIL:
-            raise pyric.error(pyric.EINVAL, "Cannot set broadcast. Set ip first")
+            raise pyric.error(pyric.EINVAL,
+                              "Cannot set broadcast. Set ip first")
         else:
             raise pyric.error(e, e.strerror)
+
 
 ################################################################################
 #### HARDWARE ON/OFF                                                        ####
 ################################################################################
+
 
 def isup(card, iosock=None):
     """
@@ -577,6 +624,7 @@ def isup(card, iosock=None):
         return _issetf_(_flagsget_(card.dev, iosock), ifh.IFF_UP)
     except AttributeError:
         raise pyric.error(pyric.EINVAL, "Invalid Card")
+
 
 def up(card, iosock=None):
     """
@@ -595,6 +643,7 @@ def up(card, iosock=None):
     except AttributeError:
         raise pyric.error(pyric.EINVAL, "Invalid Card")
 
+
 def down(card, iosock=None):
     """
     Turns def off (ifconfig <card.dev> down)
@@ -612,6 +661,7 @@ def down(card, iosock=None):
     except AttributeError:
         raise pyric.error(pyric.EINVAL, "Invalid Card")
 
+
 def isblocked(card):
     """
     Determines blocked state of Card
@@ -626,6 +676,7 @@ def isblocked(card):
     except AttributeError:
         raise pyric.error(pyric.ENODEV, "Card is no longer registered")
 
+
 def block(card):
     """
     Soft blocks card
@@ -637,6 +688,7 @@ def block(card):
         rfkill.rfkill_block(idx)
     except AttributeError:
         raise pyric.error(pyric.ENODEV, "Card is no longer registered")
+
 
 def unblock(card):
     """
@@ -650,9 +702,11 @@ def unblock(card):
     except AttributeError:
         raise pyric.error(pyric.ENODEV, "Card is no longer registered")
 
+
 ################################################################################
 #### RADIO PROPERTIES                                                       ####
 ################################################################################
+
 
 def pwrsaveget(card, nlsock=None):
     """
@@ -665,9 +719,10 @@ def pwrsaveget(card, nlsock=None):
     if nlsock is None: return _nlstub_(pwrsaveget, card)
 
     try:
-        msg = nl.nlmsg_new(nltype=_familyid_(nlsock),
-                           cmd=nl80211h.NL80211_CMD_GET_POWER_SAVE,
-                           flags=nlh.NLM_F_REQUEST | nlh.NLM_F_ACK)
+        msg = nl.nlmsg_new(
+            nltype=_familyid_(nlsock),
+            cmd=nl80211h.NL80211_CMD_GET_POWER_SAVE,
+            flags=nlh.NLM_F_REQUEST | nlh.NLM_F_ACK)
         nl.nla_put_u32(msg, card.idx, nl80211h.NL80211_ATTR_IFINDEX)
         nl.nl_sendmsg(nlsock, msg)
         rmsg = nl.nl_recvmsg(nlsock)
@@ -677,6 +732,7 @@ def pwrsaveget(card, nlsock=None):
         raise pyric.error(e.errno, e.strerror)
 
     return nl.nla_find(rmsg, nl80211h.NL80211_ATTR_PS_STATE) == 1
+
 
 def pwrsaveset(card, on, nlsock=None):
     """
@@ -690,9 +746,10 @@ def pwrsaveset(card, on, nlsock=None):
     if nlsock is None: return _nlstub_(pwrsaveset, card, on)
 
     try:
-        msg = nl.nlmsg_new(nltype=_familyid_(nlsock),
-                           cmd=nl80211h.NL80211_CMD_SET_POWER_SAVE,
-                           flags=nlh.NLM_F_REQUEST | nlh.NLM_F_ACK)
+        msg = nl.nlmsg_new(
+            nltype=_familyid_(nlsock),
+            cmd=nl80211h.NL80211_CMD_SET_POWER_SAVE,
+            flags=nlh.NLM_F_REQUEST | nlh.NLM_F_ACK)
         nl.nla_put_u32(msg, card.idx, nl80211h.NL80211_ATTR_IFINDEX)
         nl.nla_put_u32(msg, int(on), nl80211h.NL80211_ATTR_PS_STATE)
         nl.nl_sendmsg(nlsock, msg)
@@ -700,9 +757,11 @@ def pwrsaveset(card, on, nlsock=None):
     except AttributeError:
         raise pyric.error(pyric.EINVAL, "Invalid Card")
     except ValueError:
-        raise pyric.error(pyric.EINVAL, "Invalid parameter {0} for on".format(on))
+        raise pyric.error(pyric.EINVAL,
+                          "Invalid parameter {0} for on".format(on))
     except nl.error as e:
         raise pyric.error(e.errno, e.strerror)
+
 
 def covclassget(card, nlsock=None):
     """
@@ -714,6 +773,7 @@ def covclassget(card, nlsock=None):
     """
     if nlsock is None: return _nlstub_(covclassget, card)
     return phyinfo(card, nlsock)['cov_class']
+
 
 def covclassset(card, cc, nlsock=None):
     """
@@ -730,15 +790,16 @@ def covclassset(card, cc, nlsock=None):
     if cc < wlan.COV_CLASS_MIN or cc > wlan.COV_CLASS_MAX:
         # this can work 'incorrectly' on non-int values but these will
         # be caught later during conversion
-        emsg = "Cov class must be integer {0}-{1}".format(wlan.COV_CLASS_MIN,
-                                                          wlan.COV_CLASS_MAX)
+        emsg = "Cov class must be integer {0}-{1}".format(
+            wlan.COV_CLASS_MIN, wlan.COV_CLASS_MAX)
         raise pyric.error(pyric.EINVAL, emsg)
     if nlsock is None: return _nlstub_(covclassset, card, cc)
 
     try:
-        msg = nl.nlmsg_new(nltype=_familyid_(nlsock),
-                           cmd=nl80211h.NL80211_CMD_SET_WIPHY,
-                           flags=nlh.NLM_F_REQUEST | nlh.NLM_F_ACK)
+        msg = nl.nlmsg_new(
+            nltype=_familyid_(nlsock),
+            cmd=nl80211h.NL80211_CMD_SET_WIPHY,
+            flags=nlh.NLM_F_REQUEST | nlh.NLM_F_ACK)
         nl.nla_put_u32(msg, card.phy, nl80211h.NL80211_ATTR_WIPHY)
         nl.nla_put_u8(msg, int(cc), nl80211h.NL80211_ATTR_WIPHY_COVERAGE_CLASS)
         nl.nl_sendmsg(nlsock, msg)
@@ -746,9 +807,11 @@ def covclassset(card, cc, nlsock=None):
     except AttributeError:
         raise pyric.error(pyric.EINVAL, "Invalid Card")
     except ValueError:
-        raise pyric.error(pyric.EINVAL, "Invalid value {0} for Cov. Class".format(cc))
+        raise pyric.error(pyric.EINVAL,
+                          "Invalid value {0} for Cov. Class".format(cc))
     except nl.error as e:
         raise pyric.error(e.errno, e.strerror)
+
 
 def retryshortget(card, nlsock=None):
     """
@@ -759,6 +822,7 @@ def retryshortget(card, nlsock=None):
     """
     if nlsock is None: return _nlstub_(retryshortget, card)
     return phyinfo(card, nlsock)['retry_short']
+
 
 def retryshortset(card, lim, nlsock=None):
     """
@@ -772,15 +836,16 @@ def retryshortset(card, lim, nlsock=None):
     if lim < wlan.RETRY_MIN or lim > wlan.RETRY_MAX:
         # this can work 'incorrectly' on non-int values but these will
         # be caught later during conversion
-        emsg = "Retry short must be integer {0}-{1}".format(wlan.RETRY_MIN,
-                                                            wlan.RETRY_MAX)
+        emsg = "Retry short must be integer {0}-{1}".format(
+            wlan.RETRY_MIN, wlan.RETRY_MAX)
         raise pyric.error(pyric.EINVAL, emsg)
     if nlsock is None: return _nlstub_(retryshortset, card, lim)
 
     try:
-        msg = nl.nlmsg_new(nltype=_familyid_(nlsock),
-                           cmd=nl80211h.NL80211_CMD_SET_WIPHY,
-                           flags=nlh.NLM_F_REQUEST | nlh.NLM_F_ACK)
+        msg = nl.nlmsg_new(
+            nltype=_familyid_(nlsock),
+            cmd=nl80211h.NL80211_CMD_SET_WIPHY,
+            flags=nlh.NLM_F_REQUEST | nlh.NLM_F_ACK)
         nl.nla_put_u32(msg, card.phy, nl80211h.NL80211_ATTR_WIPHY)
         nl.nla_put_u8(msg, int(lim), nl80211h.NL80211_ATTR_WIPHY_RETRY_SHORT)
         nl.nl_sendmsg(nlsock, msg)
@@ -788,9 +853,11 @@ def retryshortset(card, lim, nlsock=None):
     except AttributeError:
         raise pyric.error(pyric.EINVAL, "Invalid Card")
     except ValueError:
-        raise pyric.error(pyric.EINVAL, "Invalid value {0} for lim".format(lim))
+        raise pyric.error(pyric.EINVAL,
+                          "Invalid value {0} for lim".format(lim))
     except nl.error as e:
         raise pyric.error(e.errno, e.strerror)
+
 
 def retrylongget(card, nlsock=None):
     """
@@ -802,6 +869,7 @@ def retrylongget(card, nlsock=None):
     """
     if nlsock is None: return _nlstub_(retrylongget, card)
     return phyinfo(card, nlsock)['retry_long']
+
 
 def retrylongset(card, lim, nlsock=None):
     """
@@ -816,15 +884,16 @@ def retrylongset(card, lim, nlsock=None):
     if lim < wlan.RETRY_MIN or lim > wlan.RETRY_MAX:
         # this can work 'incorrectly' on non-int values but these will
         # be caught later during conversion
-        emsg = "Retry long must be integer {0}-{1}".format(wlan.RETRY_MIN,
-                                                           wlan.RETRY_MAX)
+        emsg = "Retry long must be integer {0}-{1}".format(
+            wlan.RETRY_MIN, wlan.RETRY_MAX)
         raise pyric.error(pyric.EINVAL, emsg)
     if nlsock is None: return _nlstub_(retrylongset, card, lim)
 
     try:
-        msg = nl.nlmsg_new(nltype=_familyid_(nlsock),
-                           cmd=nl80211h.NL80211_CMD_SET_WIPHY,
-                           flags=nlh.NLM_F_REQUEST | nlh.NLM_F_ACK)
+        msg = nl.nlmsg_new(
+            nltype=_familyid_(nlsock),
+            cmd=nl80211h.NL80211_CMD_SET_WIPHY,
+            flags=nlh.NLM_F_REQUEST | nlh.NLM_F_ACK)
         nl.nla_put_u32(msg, card.phy, nl80211h.NL80211_ATTR_WIPHY)
         nl.nla_put_u8(msg, int(lim), nl80211h.NL80211_ATTR_WIPHY_RETRY_LONG)
         nl.nl_sendmsg(nlsock, msg)
@@ -832,9 +901,11 @@ def retrylongset(card, lim, nlsock=None):
     except AttributeError:
         raise pyric.error(pyric.EINVAL, "Invalid Card")
     except ValueError:
-        raise pyric.error(pyric.EINVAL, "Invalid value {0} for lim".format(lim))
+        raise pyric.error(pyric.EINVAL,
+                          "Invalid value {0} for lim".format(lim))
     except nl.error as e:
         raise pyric.error(e.errno, e.strerror)
+
 
 def rtsthreshget(card, nlsock=None):
     """
@@ -846,6 +917,7 @@ def rtsthreshget(card, nlsock=None):
     """
     if nlsock is None: return _nlstub_(rtsthreshget, card)
     return phyinfo(card, nlsock)['rts_thresh']
+
 
 def rtsthreshset(card, thresh, nlsock=None):
     """
@@ -860,15 +932,16 @@ def rtsthreshset(card, thresh, nlsock=None):
     if thresh == 'off': thresh = wlan.RTS_THRESH_OFF
     elif thresh == wlan.RTS_THRESH_OFF: pass
     elif thresh < wlan.RTS_THRESH_MIN or thresh > wlan.RTS_THRESH_MAX:
-        emsg = "Thresh must be 'off' or integer {0}-{1}".format(wlan.RTS_THRESH_MIN,
-                                                                wlan.RTS_THRESH_MAX)
+        emsg = "Thresh must be 'off' or integer {0}-{1}".format(
+            wlan.RTS_THRESH_MIN, wlan.RTS_THRESH_MAX)
         raise pyric.error(pyric.EINVAL, emsg)
     if nlsock is None: return _nlstub_(rtsthreshset, card, thresh)
 
     try:
-        msg = nl.nlmsg_new(nltype=_familyid_(nlsock),
-                           cmd=nl80211h.NL80211_CMD_SET_WIPHY,
-                           flags=nlh.NLM_F_REQUEST | nlh.NLM_F_ACK)
+        msg = nl.nlmsg_new(
+            nltype=_familyid_(nlsock),
+            cmd=nl80211h.NL80211_CMD_SET_WIPHY,
+            flags=nlh.NLM_F_REQUEST | nlh.NLM_F_ACK)
         nl.nla_put_u32(msg, card.phy, nl80211h.NL80211_ATTR_WIPHY)
         nl.nla_put_u32(msg, thresh, nl80211h.NL80211_ATTR_WIPHY_RTS_THRESHOLD)
         nl.nl_sendmsg(nlsock, msg)
@@ -876,9 +949,11 @@ def rtsthreshset(card, thresh, nlsock=None):
     except AttributeError:
         raise pyric.error(pyric.EINVAL, "Invalid Card")
     except ValueError:
-        raise pyric.error(pyric.EINVAL, "Invalid value {0} for thresh".format(thresh))
+        raise pyric.error(pyric.EINVAL,
+                          "Invalid value {0} for thresh".format(thresh))
     except nl.error as e:
         raise pyric.error(e.errno, e.strerror)
+
 
 def fragthreshget(card, nlsock=None):
     """
@@ -890,6 +965,7 @@ def fragthreshget(card, nlsock=None):
     """
     if nlsock is None: return _nlstub_(fragthreshget, card)
     return phyinfo(card, nlsock)['frag_thresh']
+
 
 def fragthreshset(card, thresh, nlsock=None):
     """
@@ -904,15 +980,16 @@ def fragthreshset(card, thresh, nlsock=None):
     if thresh == 'off': thresh = wlan.FRAG_THRESH_OFF
     elif thresh == wlan.FRAG_THRESH_OFF: pass
     elif thresh < wlan.FRAG_THRESH_MIN or thresh > wlan.FRAG_THRESH_MAX:
-        emsg = "Thresh must be 'off' or integer {0}-{1}".format(wlan.FRAG_THRESH_MIN,
-                                                                wlan.FRAG_THRESH_MAX)
+        emsg = "Thresh must be 'off' or integer {0}-{1}".format(
+            wlan.FRAG_THRESH_MIN, wlan.FRAG_THRESH_MAX)
         raise pyric.error(pyric.EINVAL, emsg)
     if nlsock is None: return _nlstub_(fragthreshset, card, thresh)
 
     try:
-        msg = nl.nlmsg_new(nltype=_familyid_(nlsock),
-                           cmd=nl80211h.NL80211_CMD_SET_WIPHY,
-                           flags=nlh.NLM_F_REQUEST | nlh.NLM_F_ACK)
+        msg = nl.nlmsg_new(
+            nltype=_familyid_(nlsock),
+            cmd=nl80211h.NL80211_CMD_SET_WIPHY,
+            flags=nlh.NLM_F_REQUEST | nlh.NLM_F_ACK)
         nl.nla_put_u32(msg, card.phy, nl80211h.NL80211_ATTR_WIPHY)
         nl.nla_put_u32(msg, thresh, nl80211h.NL80211_ATTR_WIPHY_FRAG_THRESHOLD)
         nl.nl_sendmsg(nlsock, msg)
@@ -922,9 +999,11 @@ def fragthreshset(card, thresh, nlsock=None):
     except nl.error as e:
         raise pyric.error(e.errno, e.strerror)
 
+
 ################################################################################
 #### INFO RELATED                                                           ####
 ################################################################################
+
 
 def devfreqs(card, nlsock=None):
     """
@@ -943,6 +1022,7 @@ def devfreqs(card, nlsock=None):
     rfs = sorted(rfs)
     return rfs
 
+
 def devchs(card, nlsock=None):
     """
     Returns card's supported channels
@@ -952,7 +1032,8 @@ def devchs(card, nlsock=None):
     :returns: list of supported channels
     """
     if nlsock is None: return _nlstub_(devchs, card)
-    return [channels.rf2ch(rf) for rf in devfreqs(card,nlsock)]
+    return [channels.rf2ch(rf) for rf in devfreqs(card, nlsock)]
+
 
 def devstds(card, nlsock=None):
     """
@@ -965,9 +1046,10 @@ def devstds(card, nlsock=None):
     if nlsock is None: return _nlstub_(devstds, card)
 
     stds = []
-    bands = phyinfo(card,nlsock)['bands']
+    bands = phyinfo(card, nlsock)['bands']
     if '5GHz' in bands: stds.append('a')
-    if '2GHz' in bands: stds.extend(['b','g']) # assume backward compat with b
+    if '2GHz' in bands:
+        stds.extend(['b', 'g'])  # assume backward compat with b
     HT = VHT = True
     for band in bands:
         HT &= bands[band]['HT']
@@ -975,6 +1057,7 @@ def devstds(card, nlsock=None):
     if HT: stds.append('n')
     if VHT: stds.append('ac')
     return stds
+
 
 def devmodes(card, nlsock=None):
     """
@@ -987,6 +1070,7 @@ def devmodes(card, nlsock=None):
     if nlsock is None: return _nlstub_(devmodes, card)
     return phyinfo(card, nlsock)['modes']
 
+
 def devcmds(card, nlsock=None):
     """
     Get supported commands card can execute
@@ -997,6 +1081,7 @@ def devcmds(card, nlsock=None):
     """
     if nlsock is None: return _nlstub_(devcmds, card)
     return phyinfo(card, nlsock)['commands']
+
 
 def ifinfo(card, iosock=None):
     """
@@ -1026,13 +1111,20 @@ def ifinfo(card, iosock=None):
         drvr, chips = hw.ifcard(card.dev)
         mac = macget(card, iosock)
         ip4, nmask, bcast = ifaddrget(card, iosock)
-        info = {'driver':drvr, 'chipset':chips, 'hwaddr':mac,
-                'manufacturer':hw.manufacturer(ouis,mac),
-                'inet':ip4, 'bcast':bcast, 'mask':nmask}
+        info = {
+            'driver': drvr,
+            'chipset': chips,
+            'hwaddr': mac,
+            'manufacturer': hw.manufacturer(ouis, mac),
+            'inet': ip4,
+            'bcast': bcast,
+            'mask': nmask
+        }
     except AttributeError:
         raise pyric.error(pyric.EINVAL, "Invalid Card")
 
     return info
+
 
 def devinfo(card, nlsock=None):
     """
@@ -1051,7 +1143,7 @@ def devinfo(card, nlsock=None):
     """
     if nlsock is None: return _nlstub_(devinfo, card)
 
-    dev = None # appease pycharm
+    dev = None  # appease pycharm
     try:
         # if we have a Card, pull out ifindex. otherwise get ifindex from dev
         try:
@@ -1062,9 +1154,10 @@ def devinfo(card, nlsock=None):
             idx = _ifindex_(dev)
 
         # using the ifindex, get the phy and details about the Card
-        msg = nl.nlmsg_new(nltype=_familyid_(nlsock),
-                           cmd=nl80211h.NL80211_CMD_GET_INTERFACE,
-                           flags=nlh.NLM_F_REQUEST | nlh.NLM_F_ACK)
+        msg = nl.nlmsg_new(
+            nltype=_familyid_(nlsock),
+            cmd=nl80211h.NL80211_CMD_GET_INTERFACE,
+            flags=nlh.NLM_F_REQUEST | nlh.NLM_F_ACK)
         nl.nla_put_u32(msg, idx, nl80211h.NL80211_ATTR_IFINDEX)
         nl.nl_sendmsg(nlsock, msg)
         rmsg = nl.nl_recvmsg(nlsock)
@@ -1079,8 +1172,10 @@ def devinfo(card, nlsock=None):
             try:
                 _ = _ifindex_(dev)
             except io.error as e:
-                raise pyric.error(e.errno, "{0}. Check Card".format(e.strerror))
-            raise pyric.error(pyric.EPROTONOSUPPORT, "Device does not support nl80211")
+                raise pyric.error(e.errno,
+                                  "{0}. Check Card".format(e.strerror))
+            raise pyric.error(pyric.EPROTONOSUPPORT,
+                              "Device does not support nl80211")
         raise pyric.error(e.errno, e.strerror)
 
     # pull out attributes
@@ -1097,9 +1192,10 @@ def devinfo(card, nlsock=None):
     # convert CHW to string version
     try:
         info['CHW'] = channels.CHTYPES[info['CHW']]
-    except (IndexError,TypeError): # invalid index and NoneType
+    except (IndexError, TypeError):  # invalid index and NoneType
         info['CHW'] = None
     return info
+
 
 def phyinfo(card, nlsock=None):
     """
@@ -1130,9 +1226,10 @@ def phyinfo(card, nlsock=None):
 
     # iw sends @NL80211_ATTR_SPLIT_WIPHY_DUMP, we don't & get full return at once
     try:
-        msg = nl.nlmsg_new(nltype=_familyid_(nlsock),
-                           cmd=nl80211h.NL80211_CMD_GET_WIPHY,
-                           flags=nlh.NLM_F_REQUEST | nlh.NLM_F_ACK)
+        msg = nl.nlmsg_new(
+            nltype=_familyid_(nlsock),
+            cmd=nl80211h.NL80211_CMD_GET_WIPHY,
+            flags=nlh.NLM_F_REQUEST | nlh.NLM_F_ACK)
         nl.nla_put_u32(msg, card.phy, nl80211h.NL80211_ATTR_WIPHY)
         nl.nl_sendmsg(nlsock, msg)
         rmsg = nl.nl_recvmsg(nlsock)
@@ -1143,18 +1240,25 @@ def phyinfo(card, nlsock=None):
 
     # pull out attributes
     info = {
-        'generation':nl.nla_find(rmsg, nl80211h.NL80211_ATTR_GENERATION),
-        'retry_short':nl.nla_find(rmsg, nl80211h.NL80211_ATTR_WIPHY_RETRY_SHORT),
-        'retry_long':nl.nla_find(rmsg, nl80211h.NL80211_ATTR_WIPHY_RETRY_LONG),
-        'frag_thresh':nl.nla_find(rmsg, nl80211h.NL80211_ATTR_WIPHY_FRAG_THRESHOLD),
-        'rts_thresh':nl.nla_find(rmsg, nl80211h.NL80211_ATTR_WIPHY_RTS_THRESHOLD),
-        'cov_class':nl.nla_find(rmsg, nl80211h.NL80211_ATTR_WIPHY_COVERAGE_CLASS),
-        'scan_ssids':nl.nla_find(rmsg, nl80211h.NL80211_ATTR_MAX_NUM_SCAN_SSIDS),
-        'bands':[],
-        'modes':[],
-        'swmodes':[],
-        'commands':[],
-        'ciphers':[]
+        'generation':
+        nl.nla_find(rmsg, nl80211h.NL80211_ATTR_GENERATION),
+        'retry_short':
+        nl.nla_find(rmsg, nl80211h.NL80211_ATTR_WIPHY_RETRY_SHORT),
+        'retry_long':
+        nl.nla_find(rmsg, nl80211h.NL80211_ATTR_WIPHY_RETRY_LONG),
+        'frag_thresh':
+        nl.nla_find(rmsg, nl80211h.NL80211_ATTR_WIPHY_FRAG_THRESHOLD),
+        'rts_thresh':
+        nl.nla_find(rmsg, nl80211h.NL80211_ATTR_WIPHY_RTS_THRESHOLD),
+        'cov_class':
+        nl.nla_find(rmsg, nl80211h.NL80211_ATTR_WIPHY_COVERAGE_CLASS),
+        'scan_ssids':
+        nl.nla_find(rmsg, nl80211h.NL80211_ATTR_MAX_NUM_SCAN_SSIDS),
+        'bands': [],
+        'modes': [],
+        'swmodes': [],
+        'commands': [],
+        'ciphers': []
     }
 
     # modify frag_thresh and rts_thresh as necessary
@@ -1171,21 +1275,27 @@ def phyinfo(card, nlsock=None):
     if d != nlh.NLA_ERROR: info['ciphers'] = _ciphers_(cs)
 
     # supported iftypes, sw iftypes are IAW nl80211.h flags (no attribute data)
-    _, ms, d = nl.nla_find(rmsg, nl80211h.NL80211_ATTR_SUPPORTED_IFTYPES, False)
-    if d != nlh.NLA_ERROR: info['modes'] = [_iftypes_(iftype) for iftype,_ in ms]
+    _, ms, d = nl.nla_find(rmsg, nl80211h.NL80211_ATTR_SUPPORTED_IFTYPES,
+                           False)
+    if d != nlh.NLA_ERROR:
+        info['modes'] = [_iftypes_(iftype) for iftype, _ in ms]
 
     _, ms, d = nl.nla_find(rmsg, nl80211h.NL80211_ATTR_SOFTWARE_IFTYPES, False)
-    if d != nlh.NLA_ERROR: info['swmodes'] = [_iftypes_(iftype) for iftype,_ in ms]
+    if d != nlh.NLA_ERROR:
+        info['swmodes'] = [_iftypes_(iftype) for iftype, _ in ms]
 
     # get supported commands
-    _, cs, d = nl.nla_find(rmsg, nl80211h.NL80211_ATTR_SUPPORTED_COMMANDS, False)
+    _, cs, d = nl.nla_find(rmsg, nl80211h.NL80211_ATTR_SUPPORTED_COMMANDS,
+                           False)
     if d != nlh.NLA_ERROR: info['commands'] = _commands_(cs)
 
     return info
 
+
 ################################################################################
 #### TX/RX RELATED ####
 ################################################################################
+
 
 def txset(card, setting, lvl, nlsock=None):
     """
@@ -1203,31 +1313,37 @@ def txset(card, setting, lvl, nlsock=None):
     """
     # sanity check on power setting and power level
     if not setting in TXPWRSETTINGS:
-        raise pyric.error(pyric.EINVAL, "Invalid power setting {0}".format(setting))
+        raise pyric.error(pyric.EINVAL,
+                          "Invalid power setting {0}".format(setting))
     if setting != 'auto' and lvl is None:
         raise pyric.error(pyric.EINVAL, "Power level must be specified")
     if nlsock is None: return _nlstub_(txset, card, setting, lvl)
 
     try:
         setting = TXPWRSETTINGS.index(setting)
-        msg = nl.nlmsg_new(nltype=_familyid_(nlsock),
-                           cmd=nl80211h.NL80211_CMD_SET_WIPHY,
-                           flags=nlh.NLM_F_REQUEST | nlh.NLM_F_ACK)
+        msg = nl.nlmsg_new(
+            nltype=_familyid_(nlsock),
+            cmd=nl80211h.NL80211_CMD_SET_WIPHY,
+            flags=nlh.NLM_F_REQUEST | nlh.NLM_F_ACK)
         # neither sending the phy or ifindex works
         #nl.nla_put_u32(msg, card.phy, nl80211h.NL80211_ATTR_WIPHY)
         nl.nla_put_u32(msg, card.idx, nl80211h.NL80211_ATTR_IFINDEX)
-        nl.nla_put_u32(msg, setting, nl80211h.NL80211_ATTR_WIPHY_TX_POWER_SETTING)
+        nl.nla_put_u32(msg, setting,
+                       nl80211h.NL80211_ATTR_WIPHY_TX_POWER_SETTING)
         if setting != nl80211h.NL80211_TX_POWER_AUTOMATIC:
-            nl.nla_put_u32(msg, 100*lvl, nl80211h.NL80211_ATTR_WIPHY_TX_POWER_LEVEL)
+            nl.nla_put_u32(msg, 100 * lvl,
+                           nl80211h.NL80211_ATTR_WIPHY_TX_POWER_LEVEL)
         nl.nl_sendmsg(nlsock, msg)
         _ = nl.nl_recvmsg(nlsock)
     except ValueError:
         # converting to mBm
-        raise pyric.error(pyric.EINVAL, "Invalid value {0} for txpwr".format(lvl))
+        raise pyric.error(pyric.EINVAL,
+                          "Invalid value {0} for txpwr".format(lvl))
     except AttributeError:
         raise pyric.error(pyric.EINVAL, "Invalid Card")
     except nl.error as e:
         raise pyric.error(e.errno, e.strerror)
+
 
 def txget(card, iosock=None):
     """
@@ -1254,6 +1370,7 @@ def txget(card, iosock=None):
     except io.error as e:
         raise pyric.error(e.errno, e.strerror)
 
+
 def chget(card, nlsock=None):
     """
     Gets the current channel for device (iw dev <card.dev> info | grep channel)
@@ -1265,6 +1382,7 @@ def chget(card, nlsock=None):
     """
     if nlsock is None: return _nlstub_(chget, card)
     return channels.rf2ch(devinfo(card, nlsock)['RF'])
+
 
 def chset(card, ch, chw=None, nlsock=None):
     """
@@ -1282,6 +1400,7 @@ def chset(card, ch, chw=None, nlsock=None):
     if nlsock is None: return _nlstub_(chset, card, ch, chw)
     return freqset(card, channels.ch2rf(ch), chw, nlsock)
 
+
 def freqget(card, nlsock=None):
     """
     Gets the current frequency for device (iw dev <card.dev> info | grep channel)
@@ -1294,7 +1413,8 @@ def freqget(card, nlsock=None):
     if nlsock is None: return _nlstub_(chget, card)
     return devinfo(card, nlsock)['RF']
 
-def freqset(card, rf, chw=None, nlsock = None):
+
+def freqset(card, rf, chw=None, nlsock=None):
     """
     Set the frequency and width
 
@@ -1311,9 +1431,10 @@ def freqset(card, rf, chw=None, nlsock = None):
 
     try:
         chw = channels.CHTYPES.index(chw)
-        msg = nl.nlmsg_new(nltype=_familyid_(nlsock),
-                           cmd=nl80211h.NL80211_CMD_SET_WIPHY,
-                           flags=nlh.NLM_F_REQUEST | nlh.NLM_F_ACK)
+        msg = nl.nlmsg_new(
+            nltype=_familyid_(nlsock),
+            cmd=nl80211h.NL80211_CMD_SET_WIPHY,
+            flags=nlh.NLM_F_REQUEST | nlh.NLM_F_ACK)
         nl.nla_put_u32(msg, card.phy, nl80211h.NL80211_ATTR_WIPHY)
         nl.nla_put_u32(msg, rf, nl80211h.NL80211_ATTR_WIPHY_FREQ)
         nl.nla_put_u32(msg, chw, nl80211h.NL80211_ATTR_WIPHY_CHANNEL_TYPE)
@@ -1324,10 +1445,13 @@ def freqset(card, rf, chw=None, nlsock = None):
     except AttributeError:
         raise pyric.error(pyric.EINVAL, "Invalid Card")
     except nl.error as e:
-        if e.errno == pyric.EBUSY: raise pyric.error(e.errno,pyric.strerror(e.errno))
+        if e.errno == pyric.EBUSY:
+            raise pyric.error(e.errno, pyric.strerror(e.errno))
         raise pyric.error(e.errno, e.strerror)
 
+
 #### INTERFACE & MODE RELATED ####
+
 
 def modeget(card, nlsock=None):
     """
@@ -1339,6 +1463,7 @@ def modeget(card, nlsock=None):
     """
     if nlsock is None: return _nlstub_(modeget, card)
     return devinfo(card, nlsock)['mode']
+
 
 def modeset(card, mode, flags=None, nlsock=None):
     """
@@ -1360,19 +1485,21 @@ def modeset(card, mode, flags=None, nlsock=None):
     if flags:
         for flag in flags:
             if flag not in MNTRFLAGS:
-                raise pyric.error(pyric.EINVAL, 'Invalid flag: {0}'.format(flag))
-    else: flags = []
+                raise pyric.error(pyric.EINVAL,
+                                  'Invalid flag: {0}'.format(flag))
+    else:
+        flags = []
     if nlsock is None: return _nlstub_(modeset, card, mode, flags)
 
     try:
-        msg = nl.nlmsg_new(nltype=_familyid_(nlsock),
-                           cmd=nl80211h.NL80211_CMD_SET_INTERFACE,
-                           flags=nlh.NLM_F_REQUEST | nlh.NLM_F_ACK)
+        msg = nl.nlmsg_new(
+            nltype=_familyid_(nlsock),
+            cmd=nl80211h.NL80211_CMD_SET_INTERFACE,
+            flags=nlh.NLM_F_REQUEST | nlh.NLM_F_ACK)
         nl.nla_put_u32(msg, card.idx, nl80211h.NL80211_ATTR_IFINDEX)
         nl.nla_put_u32(msg, IFTYPES.index(mode), nl80211h.NL80211_ATTR_IFTYPE)
         for flag in flags:
-            nl.nla_put_u32(msg,
-                           MNTRFLAGS.index(flag),
+            nl.nla_put_u32(msg, MNTRFLAGS.index(flag),
                            nl80211h.NL80211_ATTR_MNTR_FLAGS)
         nl.nl_sendmsg(nlsock, msg)
         _ = nl.nl_recvmsg(nlsock)
@@ -1380,6 +1507,7 @@ def modeset(card, mode, flags=None, nlsock=None):
         raise pyric.error(pyric.EINVAL, "Invalid Card")
     except nl.error as e:
         raise pyric.error(e.errno, e.strerror)
+
 
 def ifaces(card, nlsock=None):
     """
@@ -1404,6 +1532,7 @@ def ifaces(card, nlsock=None):
             raise pyric.error(e.errno, e.strerror)
     return ifs
 
+
 def devset(card, ndev, nlsock=None):
     """
     Change card's dev to ndev
@@ -1422,7 +1551,7 @@ def devset(card, ndev, nlsock=None):
     """
     if nlsock is None: return _nlstub_(devset, card, ndev)
 
-    new = None # appease PyCharm
+    new = None  # appease PyCharm
     try:
         mode = modeget(card, nlsock)
         phy = card.phy
@@ -1443,6 +1572,7 @@ def devset(card, ndev, nlsock=None):
         raise
     return new
 
+
 def devadd(card, vdev, mode, flags=None, nlsock=None):
     """
     Adds a virtual interface on device having type mode (iw dev <card.dev>
@@ -1459,15 +1589,18 @@ def devadd(card, vdev, mode, flags=None, nlsock=None):
     .. note: the new Card will be 'down'
     .. warning:: Requires root privileges
     """
-    if iswireless(vdev): raise pyric.error(pyric.ENOTUNIQ,"{0} already exists".format(vdev))
+    if iswireless(vdev):
+        raise pyric.error(pyric.ENOTUNIQ, "{0} already exists".format(vdev))
     if mode not in IFTYPES: raise pyric.error(pyric.EINVAL, 'Invalid mode')
     if flags and mode != 'monitor':
         raise pyric.error(pyric.EINVAL, 'Can only set flags in monitor mode')
     if flags:
         for flag in flags:
             if flag not in MNTRFLAGS:
-                raise pyric.error(pyric.EINVAL, 'Invalid flag: {0}'.format(flag))
-    else: flags = []
+                raise pyric.error(pyric.EINVAL,
+                                  'Invalid flag: {0}'.format(flag))
+    else:
+        flags = []
     if nlsock is None: return _nlstub_(devadd, card, vdev, mode, flags)
 
     # if we have a Card, pull out ifindex
@@ -1477,27 +1610,29 @@ def devadd(card, vdev, mode, flags=None, nlsock=None):
         idx = card
 
     try:
-        msg = nl.nlmsg_new(nltype=_familyid_(nlsock),
-                           cmd=nl80211h.NL80211_CMD_NEW_INTERFACE,
-                           flags=nlh.NLM_F_REQUEST | nlh.NLM_F_ACK)
+        msg = nl.nlmsg_new(
+            nltype=_familyid_(nlsock),
+            cmd=nl80211h.NL80211_CMD_NEW_INTERFACE,
+            flags=nlh.NLM_F_REQUEST | nlh.NLM_F_ACK)
         nl.nla_put_u32(msg, idx, nl80211h.NL80211_ATTR_IFINDEX)
         nl.nla_put_string(msg, vdev, nl80211h.NL80211_ATTR_IFNAME)
         nl.nla_put_u32(msg, IFTYPES.index(mode), nl80211h.NL80211_ATTR_IFTYPE)
         for flag in flags:
-            nl.nla_put_u32(msg,
-                           MNTRFLAGS.index(flag),
+            nl.nla_put_u32(msg, MNTRFLAGS.index(flag),
                            nl80211h.NL80211_ATTR_MNTR_FLAGS)
         nl.nl_sendmsg(nlsock, msg)
-        rmsg = nl.nl_recvmsg(nlsock) # success returns new device attributes
+        rmsg = nl.nl_recvmsg(nlsock)  # success returns new device attributes
     except AttributeError as e:
         raise pyric.error(pyric.EINVAL, e)
     except nl.error as e:
         raise pyric.error(e.errno, e.strerror)
 
     # return the new Card with info from the results msg
-    return Card(nl.nla_find(rmsg, nl80211h.NL80211_ATTR_WIPHY),
-                nl.nla_find(rmsg, nl80211h.NL80211_ATTR_IFNAME),
-                nl.nla_find(rmsg, nl80211h.NL80211_ATTR_IFINDEX))
+    return Card(
+        nl.nla_find(rmsg, nl80211h.NL80211_ATTR_WIPHY),
+        nl.nla_find(rmsg, nl80211h.NL80211_ATTR_IFNAME),
+        nl.nla_find(rmsg, nl80211h.NL80211_ATTR_IFINDEX))
+
 
 def devdel(card, nlsock=None):
     """
@@ -1511,9 +1646,10 @@ def devdel(card, nlsock=None):
     if nlsock is None: return _nlstub_(devdel, card)
 
     try:
-        msg = nl.nlmsg_new(nltype=_familyid_(nlsock),
-                           cmd=nl80211h.NL80211_CMD_DEL_INTERFACE,
-                           flags=nlh.NLM_F_REQUEST | nlh.NLM_F_ACK)
+        msg = nl.nlmsg_new(
+            nltype=_familyid_(nlsock),
+            cmd=nl80211h.NL80211_CMD_DEL_INTERFACE,
+            flags=nlh.NLM_F_REQUEST | nlh.NLM_F_ACK)
         nl.nla_put_u32(msg, card.idx, nl80211h.NL80211_ATTR_IFINDEX)
         nl.nl_sendmsg(nlsock, msg)
         _ = nl.nl_recvmsg(nlsock)
@@ -1521,6 +1657,7 @@ def devdel(card, nlsock=None):
         raise pyric.error(pyric.EINVAL, "Invalid Card")
     except nl.error as e:
         raise pyric.error(e.errno, e.strerror)
+
 
 def phyadd(card, vdev, mode, flags=None, nlsock=None):
     """
@@ -1541,11 +1678,14 @@ def phyadd(card, vdev, mode, flags=None, nlsock=None):
     if mode not in IFTYPES: raise pyric.error(pyric.EINVAL, 'Invalid mode')
     if flags:
         if mode != 'monitor':
-            raise pyric.error(pyric.EINVAL, 'Can only set flags in monitor mode')
+            raise pyric.error(pyric.EINVAL,
+                              'Can only set flags in monitor mode')
         for flag in flags:
             if flag not in MNTRFLAGS:
-                raise pyric.error(pyric.EINVAL, 'Invalid flag: {0}'.format(flag))
-    else: flags = []
+                raise pyric.error(pyric.EINVAL,
+                                  'Invalid flag: {0}'.format(flag))
+    else:
+        flags = []
     if nlsock is None: return _nlstub_(phyadd, card, vdev, mode, flags)
 
     # if we have a Card, pull out phy
@@ -1555,31 +1695,34 @@ def phyadd(card, vdev, mode, flags=None, nlsock=None):
         phy = card
 
     try:
-        msg = nl.nlmsg_new(nltype=_familyid_(nlsock),
-                           cmd=nl80211h.NL80211_CMD_NEW_INTERFACE,
-                           flags=nlh.NLM_F_REQUEST | nlh.NLM_F_ACK)
+        msg = nl.nlmsg_new(
+            nltype=_familyid_(nlsock),
+            cmd=nl80211h.NL80211_CMD_NEW_INTERFACE,
+            flags=nlh.NLM_F_REQUEST | nlh.NLM_F_ACK)
         nl.nla_put_u32(msg, phy, nl80211h.NL80211_ATTR_WIPHY)
         nl.nla_put_string(msg, vdev, nl80211h.NL80211_ATTR_IFNAME)
         nl.nla_put_u32(msg, IFTYPES.index(mode), nl80211h.NL80211_ATTR_IFTYPE)
         for flag in flags:
-            nl.nla_put_u32(msg,
-                           MNTRFLAGS.index(flag),
+            nl.nla_put_u32(msg, MNTRFLAGS.index(flag),
                            nl80211h.NL80211_ATTR_MNTR_FLAGS)
         nl.nl_sendmsg(nlsock, msg)
-        rmsg = nl.nl_recvmsg(nlsock) # success returns new device attributes
+        rmsg = nl.nl_recvmsg(nlsock)  # success returns new device attributes
     except AttributeError as e:
         raise pyric.error(pyric.EINVAL, e)
     except nl.error as e:
         raise pyric.error(e.errno, e.strerror)
 
     # get card & determine if we got a card with the specified name
-    return Card(nl.nla_find(rmsg, nl80211h.NL80211_ATTR_WIPHY),
-                nl.nla_find(rmsg, nl80211h.NL80211_ATTR_IFNAME),
-                nl.nla_find(rmsg, nl80211h.NL80211_ATTR_IFINDEX))
+    return Card(
+        nl.nla_find(rmsg, nl80211h.NL80211_ATTR_WIPHY),
+        nl.nla_find(rmsg, nl80211h.NL80211_ATTR_IFNAME),
+        nl.nla_find(rmsg, nl80211h.NL80211_ATTR_IFINDEX))
+
 
 ################################################################################
 #### STA FUNCTIONS                                                          ####
 ################################################################################
+
 
 def isconnected(card, nlsock=None):
     """
@@ -1589,6 +1732,7 @@ def isconnected(card, nlsock=None):
     """
     if nlsock is None: return _nlstub_(isconnected, card)
     return devinfo(card, nlsock)['RF'] is not None
+
 
 def connect(card, ssid, bssid=None, rf=None, nlsock=None):
     """
@@ -1606,9 +1750,10 @@ def connect(card, ssid, bssid=None, rf=None, nlsock=None):
     if nlsock is None: return _nlstub_(connect, card, ssid, bssid, rf)
 
     try:
-        msg = nl.nlmsg_new(nltype=_familyid_(nlsock),
-                           cmd=nl80211h.NL80211_CMD_CONNECT, # step 1
-                           flags=nlh.NLM_F_REQUEST | nlh.NLM_F_ACK)
+        msg = nl.nlmsg_new(
+            nltype=_familyid_(nlsock),
+            cmd=nl80211h.NL80211_CMD_CONNECT,  # step 1
+            flags=nlh.NLM_F_REQUEST | nlh.NLM_F_ACK)
         nl.nla_put_u32(msg, card.idx, nl80211h.NL80211_ATTR_IFINDEX)
         nl.nla_put_unspec(msg, ssid, nl80211h.NL80211_ATTR_SSID)
         nl.nla_put_unspec(msg, _mac2hex_(bssid), nl80211h.NL80211_ATTR_MAC)
@@ -1619,6 +1764,7 @@ def connect(card, ssid, bssid=None, rf=None, nlsock=None):
     except nl.error as e:
         raise pyric.error(e.errno, e.strerror)
     return True
+
 
 def disconnect(card, nlsock=None):
     """
@@ -1632,9 +1778,10 @@ def disconnect(card, nlsock=None):
     if nlsock is None: return _nlstub_(disconnect, card)
 
     try:
-        msg = nl.nlmsg_new(nltype=_familyid_(nlsock),
-                           cmd=nl80211h.NL80211_CMD_DISCONNECT,
-                           flags=nlh.NLM_F_REQUEST | nlh.NLM_F_ACK)
+        msg = nl.nlmsg_new(
+            nltype=_familyid_(nlsock),
+            cmd=nl80211h.NL80211_CMD_DISCONNECT,
+            flags=nlh.NLM_F_REQUEST | nlh.NLM_F_ACK)
         nl.nla_put_u32(msg, card.idx, nl80211h.NL80211_ATTR_IFINDEX)
         nl.nl_sendmsg(nlsock, msg)
         _ = nl.nl_recvmsg(nlsock)
@@ -1642,6 +1789,7 @@ def disconnect(card, nlsock=None):
         raise pyric.error(pyric.EINVAL, "Invalid Card")
     except nl.error as e:
         raise pyric.error(e.errno, e.strerror)
+
 
 def link(card, nlsock=None):
     """
@@ -1680,9 +1828,10 @@ def link(card, nlsock=None):
     try:
         # we need to set additional flags or the kernel will return ERRNO 95
         flags = nlh.NLM_F_REQUEST | nlh.NLM_F_ACK | nlh.NLM_F_ROOT | nlh.NLM_F_MATCH
-        msg = nl.nlmsg_new(nltype=_familyid_(nlsock),
-                           cmd=nl80211h.NL80211_CMD_GET_SCAN,
-                           flags=flags)
+        msg = nl.nlmsg_new(
+            nltype=_familyid_(nlsock),
+            cmd=nl80211h.NL80211_CMD_GET_SCAN,
+            flags=flags)
         nl.nla_put_u32(msg, card.idx, nl80211h.NL80211_ATTR_IFINDEX)
         nl.nl_sendmsg(nlsock, msg)
         rmsg = nl.nl_recvmsg(nlsock)
@@ -1693,8 +1842,17 @@ def link(card, nlsock=None):
 
     # link returns multiple attributes but we are only concerned w/ @NL80211_ATTR_BSS
     # some cards (my integrated intel) do not parse correctly
-    info = {'bssid': None, 'ssid': None, 'freq': None, 'rss': None, 'int': None,
-            'chw': None, 'stat': None,'tx': {}, 'rx': {}}
+    info = {
+        'bssid': None,
+        'ssid': None,
+        'freq': None,
+        'rss': None,
+        'int': None,
+        'chw': None,
+        'stat': None,
+        'tx': {},
+        'rx': {}
+    }
 
     _, bs, d = nl.nla_find(rmsg, nl80211h.NL80211_ATTR_BSS, False)
     if d == nlh.NLA_ERROR: return info
@@ -1720,8 +1878,10 @@ def link(card, nlsock=None):
                   starting at the fifth byte up to the specified length
                 """
                 try:
-                    l = struct.unpack_from('>H', attr, 0)[0] # have to change the format
-                    info['ssid'] = struct.unpack_from('{0}s'.format(l), attr, 2)[0]
+                    l = struct.unpack_from('>H', attr,
+                                           0)[0]  # have to change the format
+                    info['ssid'] = struct.unpack_from('{0}s'.format(l), attr,
+                                                      2)[0]
                 except struct.error:
                     pass
             if idx == nl80211h.NL80211_BSS_BEACON_INTERVAL:
@@ -1738,28 +1898,39 @@ def link(card, nlsock=None):
     # process stainfo of AP
     try:
         sinfo = stainfo(card, info['bssid'], nlsock)
-        info['tx'] = {'bytes': sinfo['tx-bytes'],
-                      'pkts': sinfo['tx-pkts'],
-                      'failed': sinfo['tx-failed'],
-                      'retries': sinfo['tx-retries'],
-                      'bitrate': {'rate': sinfo['tx-bitrate']['rate']}}
+        info['tx'] = {
+            'bytes': sinfo['tx-bytes'],
+            'pkts': sinfo['tx-pkts'],
+            'failed': sinfo['tx-failed'],
+            'retries': sinfo['tx-retries'],
+            'bitrate': {
+                'rate': sinfo['tx-bitrate']['rate']
+            }
+        }
         if sinfo['tx-bitrate'].has_key('mcs-index'):
-            info['tx']['bitrate']['mcs-index'] = sinfo['tx-bitrate']['mcs-index']
+            info['tx']['bitrate']['mcs-index'] = sinfo['tx-bitrate'][
+                'mcs-index']
             info['tx']['bitrate']['gi'] = sinfo['tx-bitrate']['gi']
             info['tx']['bitrate']['width'] = sinfo['tx-bitrate']['width']
 
-        info['rx'] = {'bytes': sinfo['rx-bytes'],
-                      'pkts':sinfo['rx-pkts'],
-                      'bitrate': {'rate': sinfo['rx-bitrate']['rate']}}
+        info['rx'] = {
+            'bytes': sinfo['rx-bytes'],
+            'pkts': sinfo['rx-pkts'],
+            'bitrate': {
+                'rate': sinfo['rx-bitrate']['rate']
+            }
+        }
         if sinfo['rx-bitrate'].has_key('mcs-index'):
-            info['rx']['bitrate']['mcs-index'] = sinfo['rx-bitrate']['mcs-index']
+            info['rx']['bitrate']['mcs-index'] = sinfo['rx-bitrate'][
+                'mcs-index']
             info['rx']['bitrate']['gi'] = sinfo['rx-bitrate']['gi']
             info['rx']['bitrate']['width'] = sinfo['rx-bitrate']['width']
-    except (KeyError,TypeError,AttributeError):
+    except (KeyError, TypeError, AttributeError):
         # ignore for now, returning what we got
         pass
 
     return info
+
 
 def stainfo(card, mac, nlsock=None):
     """
@@ -1791,9 +1962,10 @@ def stainfo(card, mac, nlsock=None):
     if not isconnected(card, nlsock): return None
 
     try:
-        msg = nl.nlmsg_new(nltype=_familyid_(nlsock),
-                           cmd=nl80211h.NL80211_CMD_GET_STATION,
-                           flags=nlh.NLM_F_REQUEST | nlh.NLM_F_ACK)
+        msg = nl.nlmsg_new(
+            nltype=_familyid_(nlsock),
+            cmd=nl80211h.NL80211_CMD_GET_STATION,
+            flags=nlh.NLM_F_REQUEST | nlh.NLM_F_ACK)
         nl.nla_put_u32(msg, card.idx, nl80211h.NL80211_ATTR_IFINDEX)
         nl.nla_put_unspec(msg, _mac2hex_(mac), nl80211h.NL80211_ATTR_MAC)
         nl.nl_sendmsg(nlsock, msg)
@@ -1804,12 +1976,18 @@ def stainfo(card, mac, nlsock=None):
         raise pyric.error(e.errno, e.strerror)
 
     # we are only concerned w/ @NL80211_ATTR_STA_INFO
-    info = {'rx-bytes': None, 'tx-bytes': None, 'rx-pkts': None, 'tx-pkts': None,
-            'tx-bitrate':{}, 'rx-bitrate':{}}
+    info = {
+        'rx-bytes': None,
+        'tx-bytes': None,
+        'rx-pkts': None,
+        'tx-pkts': None,
+        'tx-bitrate': {},
+        'rx-bitrate': {}
+    }
 
     _, bs, d = nl.nla_find(rmsg, nl80211h.NL80211_ATTR_STA_INFO, False)
     if d == nlh.NLA_ERROR: return info
-    for sidx, sattr in bs: # sidx indexes the enum nl80211_sta_info
+    for sidx, sattr in bs:  # sidx indexes the enum nl80211_sta_info
         try:
             if sidx == nl80211h.NL80211_STA_INFO_RX_BYTES:
                 info['rx-bytes'] = struct.unpack_from('I', sattr, 0)[0]
@@ -1833,12 +2011,14 @@ def stainfo(card, mac, nlsock=None):
 
     return info
 
+
 ################################################################################
 #### FILE PRIVATE                                                           ####
 ################################################################################
 
-IPADDR = re.compile("^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$") # re for ip addr
-MACADDR = re.compile("^([0-9a-fA-F]{2}:){5}([0-9a-fA-F]{2})$") # re for mac addr
+IPADDR = re.compile("^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$")  # re for ip addr
+MACADDR = re.compile(
+    "^([0-9a-fA-F]{2}:){5}([0-9a-fA-F]{2})$")  # re for mac addr
 
 
 def _hex2ip4_(v):
@@ -1852,6 +2032,7 @@ def _hex2ip4_(v):
         # python 3 c is already numeric
         return '.'.join([str(c) for c in v])
 
+
 def _hex2mac_(v):
     """
      :param v: packed bytestream of form \xd8\xc7\xc8\x00\x11\x22
@@ -1863,6 +2044,7 @@ def _hex2mac_(v):
         # it appears that in Python 3.5 c is already numeric
         return ":".join(['{0:02x}'.format(c) for c in v])
 
+
 def _mac2hex_(v):
     """
      converts mac address to hex string
@@ -1870,11 +2052,12 @@ def _mac2hex_(v):
      :returns: mac address as hex string
     """
     try:
-        return struct.pack('6B',*[int(x,16) for x in v.split(':')])
+        return struct.pack('6B', *[int(x, 16) for x in v.split(':')])
     except AttributeError:
         raise pyric.error(pyric.EINVAL, 'Mac address is not valid')
     except struct.error:
         raise pyric.error(pyric.EINVAL, 'Mac address is not 6 octets')
+
 
 def _validip4_(addr):
     """
@@ -1888,6 +2071,7 @@ def _validip4_(addr):
         return False
     return False
 
+
 def _validmac_(addr):
     """
      determines validity of hw addr
@@ -1900,6 +2084,7 @@ def _validmac_(addr):
         return False
     return False
 
+
 def _issetf_(flags, flag):
     """
       determines if flag is set
@@ -1908,6 +2093,7 @@ def _issetf_(flags, flag):
       :return: True if flag is set
      """
     return (flags & flag) == flag
+
 
 def _setf_(flags, flag):
     """
@@ -1918,6 +2104,7 @@ def _setf_(flags, flag):
     """
     return flags | flag
 
+
 def _unsetf_(flags, flag):
     """
      unsets flag, adding to flags
@@ -1926,6 +2113,7 @@ def _unsetf_(flags, flag):
      :return: new flag value
     """
     return flags & ~flag
+
 
 def _flagsget_(dev, iosock=None):
     """
@@ -1946,6 +2134,7 @@ def _flagsget_(dev, iosock=None):
         raise pyric.error(pyric.EUNDEF, "Error parsing results: {0}".format(e))
     except io.error as e:
         raise pyric.error(e.errno, e.strerror)
+
 
 def _flagsset_(dev, flags, iosock=None):
     """
@@ -1968,7 +2157,9 @@ def _flagsset_(dev, flags, iosock=None):
     except io.error as e:
         raise pyric.error(e.errno, e.strerror)
 
+
 #### ADDITIONAL PARSING FOR PHYINFO ####
+
 
 def _iftypes_(i):
     """
@@ -1980,6 +2171,7 @@ def _iftypes_(i):
         return IFTYPES[i]
     except IndexError:
         return "Unknown mode ({0})".format(i)
+
 
 def _bands_(bs):
     """
@@ -2004,14 +2196,16 @@ def _bands_(bs):
             idx = nl80211h.NL80211_BANDS[idx]
         except IndexError:
             idx = "UNK ({0})".format(idx)
-        bands[idx] = {'HT': False,
-                     'VHT': False,
-                     'rates': None,
-                     'rfs': None,
-                     'rf-data': None}
+        bands[idx] = {
+            'HT': False,
+            'VHT': False,
+            'rates': None,
+            'rfs': None,
+            'rf-data': None
+        }
 
         # now we delve into multiple levels of nesting
-        for bidx,battr in nl.nla_parse_nested(band):
+        for bidx, battr in nl.nla_parse_nested(band):
             # There are other data here (see nl80211_h nl80211_band_attr)
             # that we are not currently using
             if bidx == nl80211h.NL80211_BAND_ATTR_RATES:
@@ -2021,18 +2215,24 @@ def _bands_(bs):
                     bands[idx]['rates'] = []
             elif bidx == nl80211h.NL80211_BAND_ATTR_FREQS:
                 try:
-                    bands[idx]['rfs'], bands[idx]['rf-data'] = _band_rfs_(battr)
+                    bands[idx]['rfs'], bands[idx]['rf-data'] = _band_rfs_(
+                        battr)
                 except nl.error:
                     bands[idx]['rfs'], bands[idx]['rf-data'] = [], []
-            elif bidx in [nl80211h.NL80211_BAND_ATTR_HT_MCS_SET,
-                          nl80211h.NL80211_BAND_ATTR_HT_CAPA,
-                          nl80211h.NL80211_BAND_ATTR_HT_AMPDU_FACTOR,
-                          nl80211h.NL80211_BAND_ATTR_HT_AMPDU_DENSITY]:
+            elif bidx in [
+                    nl80211h.NL80211_BAND_ATTR_HT_MCS_SET,
+                    nl80211h.NL80211_BAND_ATTR_HT_CAPA,
+                    nl80211h.NL80211_BAND_ATTR_HT_AMPDU_FACTOR,
+                    nl80211h.NL80211_BAND_ATTR_HT_AMPDU_DENSITY
+            ]:
                 bands[idx]['HT'] = True
-            elif bidx in [nl80211h.NL80211_BAND_ATTR_VHT_MCS_SET,
-                          nl80211h.NL80211_BAND_ATTR_VHT_CAPA]:
+            elif bidx in [
+                    nl80211h.NL80211_BAND_ATTR_VHT_MCS_SET,
+                    nl80211h.NL80211_BAND_ATTR_VHT_CAPA
+            ]:
                 bands[idx]['VHT'] = True
     return bands
+
 
 def _band_rates_(rs):
     """
@@ -2051,6 +2251,7 @@ def _band_rates_(rs):
             if idx == nl80211h.NL80211_BITRATE_ATTR_RATE:
                 rates.append(struct.unpack_from('I', bitattr, 0)[0] * 0.1)
     return rates
+
 
 def _band_rfs_(rs):
     """
@@ -2072,12 +2273,12 @@ def _band_rfs_(rs):
         #  HT40-, HT40+, 80MHz, 160MHz and outdoor.
         # If present in not-permitted, they represent False Flags
         rfd = {
-            'max-tx': 0,        # Card's maximum tx-power on this RF
-            'enabled': True,    # w/ current reg. dom. RF is enabled
-            '20Mhz': True,      # w/ current reg. dom. 20MHz operation is allowed
-            '10Mhz': True,      # w/ current reg. dom. 10MHz operation is allowed
-            'radar': False,     # w/ current reg. dom. radar detec. required on RF
-            'not-permitted': [] # additional flags
+            'max-tx': 0,  # Card's maximum tx-power on this RF
+            'enabled': True,  # w/ current reg. dom. RF is enabled
+            '20Mhz': True,  # w/ current reg. dom. 20MHz operation is allowed
+            '10Mhz': True,  # w/ current reg. dom. 10MHz operation is allowed
+            'radar': False,  # w/ current reg. dom. radar detec. required on RF
+            'not-permitted': []  # additional flags
         }
         for rfi, rfattr in nl.nla_parse_nested(fattr):
             # rfi is the index into enum nl80211_frequency_attr
@@ -2085,7 +2286,7 @@ def _band_rfs_(rs):
                 rfs.append(struct.unpack_from('I', rfattr, 0)[0])
             elif rfi == nl80211h.NL80211_FREQUENCY_ATTR_DISABLED:
                 rfd['enabled'] = False
-            elif rfi == nl80211h.NL80211_FREQUENCY_ATTR_MAX_TX_POWER: # in mBm
+            elif rfi == nl80211h.NL80211_FREQUENCY_ATTR_MAX_TX_POWER:  # in mBm
                 rfd['max-tx'] = struct.unpack_from('I', rfattr, 0)[0] / 100
             elif rfi == nl80211h.NL80211_FREQUENCY_ATTR_NO_HT40_MINUS:
                 rfd['not-permitted'].append('HT40-')
@@ -2104,6 +2305,7 @@ def _band_rfs_(rs):
         rfds.append(rfd)
     return rfs, rfds
 
+
 def _unparsed_rf_(band):
     """
      (LEGACY) extract list of supported freqs packed byte stream band
@@ -2116,6 +2318,7 @@ def _unparsed_rf_(band):
             rfs.append(freq)
     return rfs
 
+
 def _commands_(command):
     """
      converts numeric commands to string version
@@ -2123,7 +2326,7 @@ def _commands_(command):
      :returns: list of supported commands as strings
     """
     cs = []
-    for _,cmd in command: # rather than an index, commands use a counter, ignore it
+    for _, cmd in command:  # rather than an index, commands use a counter, ignore it
         try:
             # use numeric command to lookup string version in form
             #    @NL80211_CMD_<CMD>
@@ -2132,12 +2335,13 @@ def _commands_(command):
             # it lowercase
             cmd = cmdbynum(struct.unpack_from('I', cmd, 0)[0])
             if type(cmd) is type([]): cmd = cmd[0]
-            cs.append(cmd[13:].lower()) # skip NL80211_CMD_
+            cs.append(cmd[13:].lower())  # skip NL80211_CMD_
         except KeyError:
             # kernel 4 added commands not found in kernel 3 nlh8022.h.
             # keep this just in case new commands pop up again
             cs.append("unknown cmd ({0})".format(cmd))
     return cs
+
 
 def _ciphers_(ciphers):
     """
@@ -2146,7 +2350,7 @@ def _ciphers_(ciphers):
      :returns: a list of supported ciphers
     """
     ss = []
-    for cipher in ciphers: # ciphers is a set and not nested
+    for cipher in ciphers:  # ciphers is a set and not nested
         try:
             ss.append(wlan.WLAN_CIPHER_SUITE_SELECTORS[cipher])
         except KeyError as e:
@@ -2155,7 +2359,9 @@ def _ciphers_(ciphers):
             ss.append('RSRV-{0}'.format(hex(int(e.__str__()))))
     return ss
 
+
 #### ADDITIONAL PARSING FOR STAINFO
+
 
 def _rateinfo_(ri):
     """
@@ -2169,24 +2375,30 @@ def _rateinfo_(ri):
       width: channel width oneof {20|40}
      NOTE: references enum nl80211_rate_info
     """
-    bitrate = {'rate': None, 'legacy': None, 'mcs-index': None,
-               'gi': 1, 'width': 20}
+    bitrate = {
+        'rate': None,
+        'legacy': None,
+        'mcs-index': None,
+        'gi': 1,
+        'width': 20
+    }
     for i, attr in nl.nla_parse_nested(ri):
         if i == nl80211h.NL80211_RATE_INFO_BITRATE32:
             bitrate['rate'] = struct.unpack_from('I', attr, 0)[0] * 0.1
-        elif i == nl80211h.NL80211_RATE_INFO_BITRATE: # legacy fallback rate
+        elif i == nl80211h.NL80211_RATE_INFO_BITRATE:  # legacy fallback rate
             bitrate['legacy'] = struct.unpack_from('H', attr, 0)[0]
         elif i == nl80211h.NL80211_RATE_INFO_MCS:
             bitrate['mcs-index'] = struct.unpack_from('B', attr, 0)[0]
-        elif i == nl80211h.NL80211_RATE_INFO_40_MHZ_WIDTH: # flag
+        elif i == nl80211h.NL80211_RATE_INFO_40_MHZ_WIDTH:  # flag
             bitrate['width'] = 40
-        elif i == nl80211h.NL80211_RATE_INFO_SHORT_GI: # flag
+        elif i == nl80211h.NL80211_RATE_INFO_SHORT_GI:  # flag
             bitrate['gi'] = 0
 
     # clean it up before returning
     # remove legacy if we have rate or make rate = legacy if we dont have rate
     # remove mcs-index and short gi and 40 MHz if there is no mcs-index
-    if bitrate['legacy'] and not bitrate['rate']: bitrate['rate'] = bitrate['legacy']
+    if bitrate['legacy'] and not bitrate['rate']:
+        bitrate['rate'] = bitrate['legacy']
     if bitrate['rate'] and bitrate['legacy']: del bitrate['legacy']
     if bitrate['mcs-index'] is None:
         del bitrate['mcs-index']
@@ -2195,7 +2407,9 @@ def _rateinfo_(ri):
 
     return bitrate
 
+
 #### NETLINK/IOCTL PARAMETERS ####
+
 
 def _ifindex_(dev, iosock=None):
     """
@@ -2216,6 +2430,7 @@ def _ifindex_(dev, iosock=None):
     except struct.error as e:
         raise pyric.error(pyric.EUNDEF, "Error parsing results: {0}".format(e))
 
+
 def _familyid_(nlsock):
     """
      extended version: get the family id
@@ -2234,18 +2449,20 @@ def _familyid_(nlsock):
     global _FAM80211ID_
     if _FAM80211ID_ is None:
         # family id is not instantiated, do so now
-        msg = nl.nlmsg_new(nltype=genlh.GENL_ID_CTRL,
-                           cmd=genlh.CTRL_CMD_GETFAMILY,
-                           flags=nlh.NLM_F_REQUEST | nlh.NLM_F_ACK)
-        nl.nla_put_string(msg,
-                          nl80211h.NL80211_GENL_NAME,
+        msg = nl.nlmsg_new(
+            nltype=genlh.GENL_ID_CTRL,
+            cmd=genlh.CTRL_CMD_GETFAMILY,
+            flags=nlh.NLM_F_REQUEST | nlh.NLM_F_ACK)
+        nl.nla_put_string(msg, nl80211h.NL80211_GENL_NAME,
                           genlh.CTRL_ATTR_FAMILY_NAME)
         nl.nl_sendmsg(nlsock, msg)
         rmsg = nl.nl_recvmsg(nlsock)
         _FAM80211ID_ = nl.nla_find(rmsg, genlh.CTRL_ATTR_FAMILY_ID)
     return _FAM80211ID_
 
+
 #### TRANSLATION FUNCTIONS ####
+
 
 def _iostub_(fct, *argv):
     """
@@ -2261,9 +2478,10 @@ def _iostub_(fct, *argv):
     except io.error as e:
         raise pyric.error(e.errno, pyric.strerror(e.errno))
     except pyric.error:
-        raise # catch and rethrow
+        raise  # catch and rethrow
     finally:
         io.io_socket_free(iosock)
+
 
 def _nlstub_(fct, *argv):
     """
@@ -2284,7 +2502,9 @@ def _nlstub_(fct, *argv):
     finally:
         if nlsock: nl.nl_socket_free(nlsock)
 
+
 #### PENDING ####
+
 
 def _fut_chset(card, ch, chw, nlsock=None):
     """
@@ -2297,17 +2517,22 @@ def _fut_chset(card, ch, chw, nlsock=None):
      uses *_SET_WIPHY however, ATT does not work raise Errno 22 Invalid Argument
      NOTE: This only works for cards in monitor mode
     """
-    if ch not in channels.channels(): raise pyric.error(pyric.EINVAL, "Invalid channel")
-    if chw not in channels.CHTYPES: raise pyric.error(pyric.EINVAL, "Invalid channel width")
+    if ch not in channels.channels():
+        raise pyric.error(pyric.EINVAL, "Invalid channel")
+    if chw not in channels.CHTYPES:
+        raise pyric.error(pyric.EINVAL, "Invalid channel width")
     if nlsock is None: return _nlstub_(_fut_chset, card, ch, chw)
 
     try:
-        msg = nl.nlmsg_new(nltype=_familyid_(nlsock),
-                           cmd=nl80211h.NL80211_CMD_SET_CHANNEL,
-                           flags=nlh.NLM_F_REQUEST | nlh.NLM_F_ACK)
+        msg = nl.nlmsg_new(
+            nltype=_familyid_(nlsock),
+            cmd=nl80211h.NL80211_CMD_SET_CHANNEL,
+            flags=nlh.NLM_F_REQUEST | nlh.NLM_F_ACK)
         nl.nla_put_u32(msg, card.idx, nl80211h.NL80211_ATTR_IFINDEX)
-        nl.nla_put_u32(msg, channels.ch2rf(ch), nl80211h.NL80211_ATTR_WIPHY_FREQ)
-        nl.nla_put_u32(msg, channels.CHTYPES.index(chw), nl80211h.NL80211_ATTR_WIPHY_CHANNEL_TYPE)
+        nl.nla_put_u32(msg, channels.ch2rf(ch),
+                       nl80211h.NL80211_ATTR_WIPHY_FREQ)
+        nl.nla_put_u32(msg, channels.CHTYPES.index(chw),
+                       nl80211h.NL80211_ATTR_WIPHY_CHANNEL_TYPE)
         nl.nl_sendmsg(nlsock, msg)
         _ = nl.nl_recvmsg(nlsock)
     except AttributeError:

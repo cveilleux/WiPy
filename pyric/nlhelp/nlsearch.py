@@ -43,35 +43,38 @@ import pyric.net.wireless.nl80211_h as nl80211h
 fpath = os.path.dirname(os.path.realpath(__file__))
 
 # read in the files here
-cmdpath = os.path.join(fpath,'commands.help')
-commands = None   # cmd -> desc,attributes used dict
+cmdpath = os.path.join(fpath, 'commands.help')
+commands = None  # cmd -> desc,attributes used dict
 cmdlookup = None  # reverse lookup for command constants
 cin = None
 try:
     # first three lines are comments, 4th line is empty
-    cin = open(cmdpath,'r')
-    for _ in range(4): _in = cin.readline()
+    cin = open(cmdpath, 'r')
+    for _ in range(4):
+        _in = cin.readline()
     commands = json.loads(cin.readline())
     cmdlookup = json.loads(cin.readline())
 except:
-    raise pyric.error(pyric.EUNDEF,"Failed to process commands.help")
+    raise pyric.error(pyric.EUNDEF, "Failed to process commands.help")
 finally:
     if cin: cin.close()
 
-attrpath = os.path.join(fpath,'attributes.help')
-attributes = None # attr -> desc, commands used by, datatype
-attrlookup = None # reverse lookup for attribute constants
+attrpath = os.path.join(fpath, 'attributes.help')
+attributes = None  # attr -> desc, commands used by, datatype
+attrlookup = None  # reverse lookup for attribute constants
 ain = None
 try:
     # first three lines are comments, 3th line is empty
-    ain = open(attrpath,'r')
-    for _ in range(4): _in = ain.readline()
+    ain = open(attrpath, 'r')
+    for _ in range(4):
+        _in = ain.readline()
     attributes = json.loads(ain.readline())
     attrlookup = json.loads(ain.readline())
 except:
     raise pyric.error(pyric.EUNDEF, "Failed to process attributes.help")
 finally:
     if ain: ain.close()
+
 
 def command(cmd):
     """
@@ -82,12 +85,13 @@ def command(cmd):
      that refers to the command
     """
     try:
-        cmd = cmd.upper().replace('@','') # in the event it comes from cmdbynum
+        cmd = cmd.upper().replace('@',
+                                  '')  # in the event it comes from cmdbynum
         if not cmd.startswith("NL80211_CMD_"): cmd = "@NL80211_CMD_" + cmd
         else: cmd = '@' + cmd
         entry = commands[cmd]
-        attrs = ", ".join([attr.replace('%','') for attr in entry['attrs']])
-        out = "{0}\tValue={1}\n".format(cmd,eval('nl80211h.' + cmd[1:]))
+        attrs = ", ".join([attr.replace('%', '') for attr in entry['attrs']])
+        out = "{0}\tValue={1}\n".format(cmd, eval('nl80211h.' + cmd[1:]))
         out += "------------------------------------------------------\n"
         out += "Description: {0}\n".format(entry['desc'])
         out += "------------------------------------------------------\n"
@@ -98,6 +102,7 @@ def command(cmd):
     except AttributeError:
         return "{0} not found in nl80211_h".format(cmd)
 
+
 def cmdbynum(n):
     """
      reverse lookup n to corresponding command variable
@@ -105,6 +110,7 @@ def cmdbynum(n):
      :returns: string representation of the command variable corresponding to n
     """
     return cmdlookup[str(n)]
+
 
 def attribute(attr):
     """
@@ -115,14 +121,14 @@ def attribute(attr):
       of the attribute and the constant that refers to the attribute
       """
     try:
-        attr = attr.upper().replace('@','')  # in the event it comes from attrbynum
+        attr = attr.upper().replace('@',
+                                    '')  # in the event it comes from attrbynum
         if not attr.startswith("NL80211_ATTR_"): attr = "@NL80211_ATTR_" + attr
         else: attr = '@' + attr
         entry = attributes[attr]
         cmds = ", ".join([cmd.replace('%', '') for cmd in entry['cmds']])
-        out = "{0}\tValue={1}\tDatatype={2}\n".format(attr,
-                                                      eval('nl80211h.' + attr[1:]),
-                                                      entry['type'])
+        out = "{0}\tValue={1}\tDatatype={2}\n".format(
+            attr, eval('nl80211h.' + attr[1:]), entry['type'])
         out += "------------------------------------------------------\n"
         out += "Description: {0}\n".format(entry['desc'])
         out += "------------------------------------------------------\n"
@@ -133,6 +139,7 @@ def attribute(attr):
     except AttributeError:
         return "{0} not found in nl80211_h".format(attr)
 
+
 def attrbynum(n):
     """
      reverse lookup n to corresponding attribute variable
@@ -141,6 +148,7 @@ def attrbynum(n):
     """
     return attrlookup[str(n)][0]
 
+
 def search(tkn):
     """
      searches for and returns any commands,attributes with tkn
@@ -148,8 +156,8 @@ def search(tkn):
      :returns: a list of commands,attributes with tkn in them
     """
     tkn = tkn.upper()
-    if len(tkn)  < 3:
-        raise pyric.error(pyric.EUNDEF,"{0} is to ambiguous".format(tkn))
+    if len(tkn) < 3:
+        raise pyric.error(pyric.EUNDEF, "{0} is to ambiguous".format(tkn))
     found = [cmd for cmd in commands if tkn in cmd]
     found += [attr for attr in attributes if tkn in attr]
     return found

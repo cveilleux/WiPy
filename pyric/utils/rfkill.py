@@ -49,8 +49,7 @@ import pyric.net.wireless.rfkill_h as rfkh
 import sys
 _PY3_ = sys.version_info.major == 3
 
-RFKILL_STATE = [False,True] # Unblocked = 0, Blocked = 1
-
+RFKILL_STATE = [False, True]  # Unblocked = 0, Blocked = 1
 """
  rfkill writes and reads rfkill_event structures to /dev/rfkill using fcntl
  Results and useful information can be found in /sys/class/rfkill which contains
@@ -61,7 +60,8 @@ RFKILL_STATE = [False,True] # Unblocked = 0, Blocked = 1
 """
 dpath = '/dev/rfkill'
 spath = '/sys/class/rfkill'
-ipath = 'sys/class/ieee80211' # directory of physical indexes
+ipath = 'sys/class/ieee80211'  # directory of physical indexes
+
 
 def rfkill_list():
     """
@@ -69,46 +69,53 @@ def rfkill_list():
      :returns: a dict of dicts name -> {idx,type,soft,hard}
     """
     rfks = {}
-    fin = open(dpath,'r') # this will raise an IOError if rfkill is not supported
-    flags = fcntl.fcntl(fin.fileno(),fcntl.F_GETFL)
-    fcntl.fcntl(fin.fileno(),fcntl.F_SETFL,flags|os.O_NONBLOCK)
+    fin = open(dpath,
+               'r')  # this will raise an IOError if rfkill is not supported
+    flags = fcntl.fcntl(fin.fileno(), fcntl.F_GETFL)
+    fcntl.fcntl(fin.fileno(), fcntl.F_SETFL, flags | os.O_NONBLOCK)
     while True:
         try:
             stream = fin.read(rfkh.RFKILLEVENTLEN)
             if _PY3_:
                 # noinspection PyArgumentList
-                stream = bytes(stream,'ascii')
+                stream = bytes(stream, 'ascii')
                 if len(stream) < rfkh.RFKILLEVENTLEN: raise IOError('python 3')
-            idx,t,op,s,h = struct.unpack(rfkh.rfk_rfkill_event,stream)
+            idx, t, op, s, h = struct.unpack(rfkh.rfk_rfkill_event, stream)
             if op == rfkh.RFKILL_OP_ADD:
-                rfks[getname(idx)] = {'idx':idx,
-                                      'type':rfkh.RFKILL_TYPES[t],
-                                      'soft':RFKILL_STATE[s],
-                                      'hard':RFKILL_STATE[h]}
+                rfks[getname(idx)] = {
+                    'idx': idx,
+                    'type': rfkh.RFKILL_TYPES[t],
+                    'soft': RFKILL_STATE[s],
+                    'hard': RFKILL_STATE[h]
+                }
         except IOError:
             break
     fin.close()
     return rfks
+
 
 def rfkill_block(idx):
     """
      blocks the device at index
      :param idx: rkill index
     """
-    if not os.path.exists(os.path.join(spath,"rfkill{0}".format(idx))):
-        raise pyric.error(errno.ENODEV,"No device at {0}".format(idx))
+    if not os.path.exists(os.path.join(spath, "rfkill{0}".format(idx))):
+        raise pyric.error(errno.ENODEV, "No device at {0}".format(idx))
     fout = None
     try:
-        rfke = rfkh.rfkill_event(idx,rfkh.RFKILL_TYPE_ALL,rfkh.RFKILL_OP_CHANGE,1,0)
+        rfke = rfkh.rfkill_event(idx, rfkh.RFKILL_TYPE_ALL,
+                                 rfkh.RFKILL_OP_CHANGE, 1, 0)
         if _PY3_: rfke = rfke.decode('ascii')
         fout = open(dpath, 'w')
         fout.write(rfke)
     except struct.error as e:
-        raise pyric.error(pyric.EUNDEF,"Error packing rfkill event {0}".format(e))
+        raise pyric.error(pyric.EUNDEF,
+                          "Error packing rfkill event {0}".format(e))
     except IOError as e:
-        raise pyric.error(e.errno,e.message)
+        raise pyric.error(e.errno, e.message)
     finally:
         if fout: fout.close()
+
 
 def rfkill_blockby(rtype):
     """
@@ -121,6 +128,7 @@ def rfkill_blockby(rtype):
         if rfks[name]['type'] == rtype:
             rfkill_block(rfks[name]['idx'])
 
+
 def rfkill_unblock(idx):
     """
      unblocks the device at index
@@ -130,15 +138,18 @@ def rfkill_unblock(idx):
         raise pyric.error(errno.ENODEV, "No device at {0}".format(idx))
     fout = None
     try:
-        rfke = rfkh.rfkill_event(idx,rfkh.RFKILL_TYPE_ALL,rfkh.RFKILL_OP_CHANGE,0,0)
+        rfke = rfkh.rfkill_event(idx, rfkh.RFKILL_TYPE_ALL,
+                                 rfkh.RFKILL_OP_CHANGE, 0, 0)
         fout = open(dpath, 'w')
         fout.write(rfke)
     except struct.error as e:
-        raise pyric.error(pyric.EUNDEF,"Error packing rfkill event {0}".format(e))
+        raise pyric.error(pyric.EUNDEF,
+                          "Error packing rfkill event {0}".format(e))
     except IOError as e:
-        raise pyric.error(e.errno,e.message)
+        raise pyric.error(e.errno, e.message)
     finally:
         if fout: fout.close()
+
 
 def rfkill_unblockby(rtype):
     """
@@ -147,11 +158,12 @@ def rfkill_unblockby(rtype):
       |'wwan'|'gps'|'fm'|'nfc'}
     """
     if rtype not in rfkh.RFKILL_TYPES:
-        raise pyric.error(errno.EINVAL,"Type {0} is not valid".format(rtype))
+        raise pyric.error(errno.EINVAL, "Type {0} is not valid".format(rtype))
     rfks = rfkill_list()
     for name in rfks:
         if rfks[name]['type'] == rtype:
             rfkill_unblock(rfks[name]['idx'])
+
 
 def soft_blocked(idx):
     """
@@ -159,18 +171,19 @@ def soft_blocked(idx):
      :param idx: rkill index
      :returns: True if device at idx is soft blocked, False otherwise
     """
-    if not os.path.exists(os.path.join(spath,"rfkill{0}".format(idx))):
-        raise pyric.error(errno.ENODEV,"No device at {0}".format(idx))
+    if not os.path.exists(os.path.join(spath, "rfkill{0}".format(idx))):
+        raise pyric.error(errno.ENODEV, "No device at {0}".format(idx))
     fin = None
     try:
-        fin = open(os.path.join(spath,"rfkill{0}".format(idx),'soft'),'r')
+        fin = open(os.path.join(spath, "rfkill{0}".format(idx), 'soft'), 'r')
         return int(fin.read().strip()) == 1
     except IOError:
-        raise pyric.error(errno.ENODEV,"No device at {0}".format(idx))
+        raise pyric.error(errno.ENODEV, "No device at {0}".format(idx))
     except ValueError:
-        raise pyric.error(pyric.EUNDEF,"Unexpected error")
+        raise pyric.error(pyric.EUNDEF, "Unexpected error")
     finally:
         if fin: fin.close()
+
 
 def hard_blocked(idx):
     """
@@ -178,18 +191,19 @@ def hard_blocked(idx):
      :param idx: rkill index
      :returns: True if device at idx is hard blocked, False otherwise
     """
-    if not os.path.exists(os.path.join(spath,"rfkill{0}".format(idx))):
-        raise pyric.error(errno.ENODEV,"No device at {0}".format(idx))
+    if not os.path.exists(os.path.join(spath, "rfkill{0}".format(idx))):
+        raise pyric.error(errno.ENODEV, "No device at {0}".format(idx))
     fin = None
     try:
-        fin = open(os.path.join(spath,"rfkill{0}".format(idx),'hard'),'r')
+        fin = open(os.path.join(spath, "rfkill{0}".format(idx), 'hard'), 'r')
         return int(fin.read().strip()) == 1
     except IOError:
-        raise pyric.error(errno.ENODEV,"No device at {0}".format(idx))
+        raise pyric.error(errno.ENODEV, "No device at {0}".format(idx))
     except ValueError:
-        raise pyric.error(pyric.EUNDEF,"Unexpected error")
+        raise pyric.error(pyric.EUNDEF, "Unexpected error")
     finally:
         if fin: fin.close()
+
 
 def getidx(phy):
     """
@@ -203,6 +217,7 @@ def getidx(phy):
     except KeyError:
         return None
 
+
 def getname(idx):
     """
      returns the phyical name of the device
@@ -211,12 +226,13 @@ def getname(idx):
     """
     fin = None
     try:
-        fin = open(os.path.join(spath,"rfkill{0}".format(idx),'name'),'r')
+        fin = open(os.path.join(spath, "rfkill{0}".format(idx), 'name'), 'r')
         return fin.read().strip()
     except IOError:
-        raise pyric.error(errno.EINVAL,"No device at {0}".format(idx))
+        raise pyric.error(errno.EINVAL, "No device at {0}".format(idx))
     finally:
         if fin: fin.close()
+
 
 def gettype(idx):
     """
@@ -226,9 +242,9 @@ def gettype(idx):
     """
     fin = None
     try:
-        fin = open(os.path.join(spath,"rfkill{0}".format(idx),'type'),'r')
+        fin = open(os.path.join(spath, "rfkill{0}".format(idx), 'type'), 'r')
         return fin.read().strip()
     except IOError:
-        raise pyric.error(errno.ENODEV,"No device at {0}".format(idx))
+        raise pyric.error(errno.ENODEV, "No device at {0}".format(idx))
     finally:
         if fin: fin.close()

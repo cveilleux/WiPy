@@ -39,7 +39,8 @@ import pyric.net.netlink_h as nlh
 import pyric.net.genetlink_h as genlh
 import pyric.net.wireless.nl80211_c as nl80211c
 
-def nla_datatype(policy,attr):
+
+def nla_datatype(policy, attr):
     """
      determines the appropriate attribute datatype as found in policy
      :param policy: policy name
@@ -49,8 +50,9 @@ def nla_datatype(policy,attr):
     """
     try:
         return nla_dts[policy][attr]
-    except (KeyError,IndexError):
+    except (KeyError, IndexError):
         return nlh.NLA_UNSPEC
+
 
 # map string names to datatype lists
 nla_dts = {}
@@ -59,25 +61,39 @@ nla_dts_set = {}
 #### CTRL_ATTR_*
 # commented out below to determine if nested _OPS and _MCAST_GROUPS
 # was causing an infinite loop in nla_parse_nested
-nla_dts['ctrl_attr'] = {genlh.CTRL_ATTR_UNSPEC:nlh.NLA_UNSPEC,
-                        genlh.CTRL_ATTR_FAMILY_ID:nlh.NLA_U16,
-                        genlh.CTRL_ATTR_FAMILY_NAME:nlh.NLA_STRING,
-                        genlh.CTRL_ATTR_VERSION:nlh.NLA_U32,
-                        genlh.CTRL_ATTR_HDRSIZE:nlh.NLA_U32,
-                        genlh.CTRL_ATTR_MAXATTR:nlh.NLA_U32,
-                        genlh.CTRL_ATTR_OPS:nlh.NLA_NESTED,
-                        #genlh.CTRL_ATTR_OPS: nlh.NLA_UNSPEC,
-                        genlh.CTRL_ATTR_MCAST_GROUPS:nlh.NLA_NESTED}
-                        #genlh.CTRL_ATTR_MCAST_GROUPS: nlh.NLA_UNSPEC}
+nla_dts['ctrl_attr'] = {
+    genlh.CTRL_ATTR_UNSPEC:
+    nlh.NLA_UNSPEC,
+    genlh.CTRL_ATTR_FAMILY_ID:
+    nlh.NLA_U16,
+    genlh.CTRL_ATTR_FAMILY_NAME:
+    nlh.NLA_STRING,
+    genlh.CTRL_ATTR_VERSION:
+    nlh.NLA_U32,
+    genlh.CTRL_ATTR_HDRSIZE:
+    nlh.NLA_U32,
+    genlh.CTRL_ATTR_MAXATTR:
+    nlh.NLA_U32,
+    genlh.CTRL_ATTR_OPS:
+    nlh.NLA_NESTED,
+    #genlh.CTRL_ATTR_OPS: nlh.NLA_UNSPEC,
+    genlh.CTRL_ATTR_MCAST_GROUPS:
+    nlh.NLA_NESTED
+}
+#genlh.CTRL_ATTR_MCAST_GROUPS: nlh.NLA_UNSPEC}
 
 #### CTRL_ATTR_OP_*
-nla_dts['ctrl_attr_op'] = {genlh.CTRL_ATTR_OP_UNSPEC:nlh.NLA_UNSPEC,
-                           genlh.CTRL_ATTR_OP_ID:nlh.NLA_U32,
-                           genlh.CTRL_ATTR_OP_FLAGS:nlh.NLA_U32}
+nla_dts['ctrl_attr_op'] = {
+    genlh.CTRL_ATTR_OP_UNSPEC: nlh.NLA_UNSPEC,
+    genlh.CTRL_ATTR_OP_ID: nlh.NLA_U32,
+    genlh.CTRL_ATTR_OP_FLAGS: nlh.NLA_U32
+}
 
 #### CTRL_ATTR_MCAST_*
-nla_dts['ctrl_attr_mcast'] = {genlh.CTRL_ATTR_MCAST_GRP_UNSPEC:nlh.NLA_UNSPEC,
-                              genlh.CTRL_ATTR_MCAST_GRP_NAME:nlh.NLA_STRING,
-                              genlh.CTRL_ATTR_MCAST_GRP_ID:nlh.NLA_U32}
+nla_dts['ctrl_attr_mcast'] = {
+    genlh.CTRL_ATTR_MCAST_GRP_UNSPEC: nlh.NLA_UNSPEC,
+    genlh.CTRL_ATTR_MCAST_GRP_NAME: nlh.NLA_STRING,
+    genlh.CTRL_ATTR_MCAST_GRP_ID: nlh.NLA_U32
+}
 
 nla_dts['nl80211_attr'] = nl80211c.nl80211_policy
