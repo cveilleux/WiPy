@@ -1,0 +1,8 @@
+title: PyRIC
+description: Pythonic iw (and more) for the Wireless Pentester
+google_analytics: 
+show_downloads: true
+theme: jekyll-theme-minimal
+
+gems:
+  - jekyll-mentions
