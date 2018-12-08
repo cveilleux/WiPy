@@ -24,14 +24,14 @@ i.e. send/recv w.r.t ioctl calls
 
 """
 
-__name__ = 'libio'
-__license__ = 'GPLv3'
-__version__ = '0.0.1'
-__date__ = 'April 2016'
-__author__ = 'Dale Patterson'
-__maintainer__ = 'Dale Patterson'
-__email__ = 'wraith.wireless@yandex.com'
-__status__ = 'Production'
+__name__ = "libio"
+__license__ = "GPLv3"
+__version__ = "0.0.1"
+__date__ = "April 2016"
+__author__ = "Dale Patterson"
+__maintainer__ = "Dale Patterson"
+__email__ = "wraith.wireless@yandex.com"
+__status__ = "Production"
 
 import socket
 import struct
@@ -53,7 +53,8 @@ def io_socket_alloc():
 
 def io_socket_free(iosock):
     """ close the socket """
-    if iosock: iosock.close()
+    if iosock:
+        iosock.close()
     return None
 
 
@@ -69,8 +70,10 @@ def io_transfer(iosock, flag, ifreq):
         return ioctl(iosock.fileno(), flag, ifreq)
     except (AttributeError, struct.error) as e:
         # either sock is not valid or a bad value passed to ifreq
-        if e.message.find('fileno'): raise error(errno.ENOTSOCK, "Bad socket")
-        else: raise error(errno.EINVAL, e)
+        if e.message.find("fileno"):
+            raise error(errno.ENOTSOCK, "Bad socket")
+        else:
+            raise error(errno.EINVAL, e)
     except IOError as e:
         # generally device cannot be found sort but can also be
         # permissions etc, catch and reraise as our own

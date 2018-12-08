@@ -48,18 +48,19 @@ from socket.h to python
 
 """
 
-__name__ = 'if_h'
-__license__ = 'GPLv3'
-__version__ = '0.0.3'
-__date__ = 'February 2016'
-__author__ = 'Dale Patterson'
-__maintainer__ = 'Dale Patterson'
-__email__ = 'wraith.wireless@yandex.com'
-__status__ = 'Production'
+__name__ = "if_h"
+__license__ = "GPLv3"
+__version__ = "0.0.3"
+__date__ = "February 2016"
+__author__ = "Dale Patterson"
+__maintainer__ = "Dale Patterson"
+__email__ = "wraith.wireless@yandex.com"
+__status__ = "Production"
 
 import struct
 import pyric.net.sockios_h as sioch
 import sys
+
 _PY3_ = sys.version_info.major == 3
 
 IFNAMSIZ = 16
@@ -86,8 +87,17 @@ IFF_LOWER_UP = 0x10000  # driver signals L1 up
 IFF_DORMANT = 0x20000  # driver signals dormant
 IFF_ECHO = 0x40000  # echo sent packets
 
-IFF_VOLATILE = IFF_LOOPBACK | IFF_POINTOPOINT | IFF_BROADCAST | IFF_ECHO | \
-               IFF_MASTER | IFF_SLAVE | IFF_RUNNING | IFF_LOWER_UP | IFF_DORMANT
+IFF_VOLATILE = (
+    IFF_LOOPBACK
+    | IFF_POINTOPOINT
+    | IFF_BROADCAST
+    | IFF_ECHO
+    | IFF_MASTER
+    | IFF_SLAVE
+    | IFF_RUNNING
+    | IFF_LOWER_UP
+    | IFF_DORMANT
+)
 
 # Private (from user) interface flags (netdevice->priv_flags).
 IFF_802_1Q_VLAN = 0x1  # 802.1Q VLAN device.
@@ -111,7 +121,9 @@ IFF_TX_SKB_SHARING = 0x10000  # The interface supports sharing skbs on transmit
 IFF_UNICAST_FLT = 0x20000  # Supports unicast filtering
 IFF_TEAM_PORT = 0x40000  # device used as team port
 IFF_SUPP_NOFCS = 0x80000  # device supports sending custom FCS
-IFF_LIVE_ADDR_CHANGE = 0x100000  # device supports hardware address change when it's running
+IFF_LIVE_ADDR_CHANGE = (
+    0x100000
+)  # device supports hardware address change when it's running
 IFF_MACVLAN = 0x200000  # Macvlan device
 
 IF_GET_IFACE = 0x0001  # for querying only
@@ -170,7 +182,7 @@ ARPHRD_IEEE80211 = 801  # net/if_arp.h sa_family IEEE 802.11
 ARPHRD_IEEE80211_PRISM = 802  # net/if_arp.h sa_family Prism2 header
 ARPHRD_IEEE80211_RADIOTAP = 803  # net/if_arp.h sa_family radiotap header
 AF_INET = 2  # from socket.h ip address (ip4)
-sa_addr = 'H6B'
+sa_addr = "H6B"
 
 
 def sockaddr(sa_family, sa_data=None):
@@ -186,13 +198,12 @@ def sockaddr(sa_family, sa_data=None):
         vs.extend([0] * 6)  # send empty bytes for ioctl to fill in
     else:
         if sa_family == ARPHRD_ETHER:
-            vs.extend([int(x, 16) for x in sa_data.split(':')])
+            vs.extend([int(x, 16) for x in sa_data.split(":")])
         elif sa_family == AF_INET:
             # we need 6 octets - so prepend two 0's to the ip addr
-            vs.extend([int(x) for x in ('0.0.' + sa_data).split('.')])
+            vs.extend([int(x) for x in ("0.0." + sa_data).split(".")])
         else:
-            raise AttributeError(
-                "sa_family {0} not supported".format(sa_family))
+            raise AttributeError("sa_family {0} not supported".format(sa_family))
     return struct.pack(sa_addr, *vs)
 
 
@@ -235,12 +246,11 @@ struct	iw_param
  to get the txpower and verify the presense of wireless extensions
 };
 """
-ifr_name = '{0}s'.format(IFNAMSIZ)  # formats for ifreq struct
-ifr_flags = 'h'
-ifr_ifindex = 'i'
-ifr_iwname = '{0}s'.format(
-    256 - IFNAMSIZ)  # dirty hack to get an unknown string back
-ifr_iwtxpwr = 'iBBH'
+ifr_name = "{0}s".format(IFNAMSIZ)  # formats for ifreq struct
+ifr_flags = "h"
+ifr_ifindex = "i"
+ifr_iwname = "{0}s".format(256 - IFNAMSIZ)  # dirty hack to get an unknown string back
+ifr_iwtxpwr = "iBBH"
 IFNAMELEN = struct.calcsize(ifr_name)  # lengths
 IFADDRLEN = struct.calcsize(sa_addr)  # length of both ip4 and mac
 IFFLAGLEN = struct.calcsize(ifr_flags)
@@ -266,7 +276,8 @@ def ifreq(ifrn, ifru=None, param=None):
      NOTE: ifreq will return AttributeError for any caught exception
     """
     # pack the nic
-    if _PY3_: ifrn = bytes(ifrn, 'ascii')
+    if _PY3_:
+        ifrn = bytes(ifrn, "ascii")
     try:
         # NOTE: don't need to keep the name to 16 chars as struct does it for us
         ifr = struct.pack(ifr_name, ifrn)
@@ -274,29 +285,34 @@ def ifreq(ifrn, ifru=None, param=None):
         raise AttributeError("ifr_ifrn (dev name) {0} is invalid".format(ifrn))
 
     try:
-        if not ifru: pass  # only pass the device name
+        if not ifru:
+            pass  # only pass the device name
         elif ifru == sioch.SIOCGIFHWADDR:  # get hwaddr
             ifr += sockaddr(ARPHRD_ETHER, None)
         elif ifru == sioch.SIOCSIFHWADDR:  # set hwaddr
             ifr += sockaddr(ARPHRD_ETHER, param[0])
-        elif ifru == sioch.SIOCGIFADDR or \
-             ifru == sioch.SIOCGIFNETMASK or \
-             ifru == sioch.SIOCGIFBRDADDR: # get ip4, netmask or broadcast address
+        elif (
+            ifru == sioch.SIOCGIFADDR
+            or ifru == sioch.SIOCGIFNETMASK
+            or ifru == sioch.SIOCGIFBRDADDR
+        ):  # get ip4, netmask or broadcast address
             ifr += sockaddr(AF_INET, None)
-        elif ifru == sioch.SIOCSIFADDR or \
-             ifru == sioch.SIOCSIFNETMASK or \
-             ifru == sioch.SIOCSIFBRDADDR:  # set ip4, netmask or broadcast address
+        elif (
+            ifru == sioch.SIOCSIFADDR
+            or ifru == sioch.SIOCSIFNETMASK
+            or ifru == sioch.SIOCSIFBRDADDR
+        ):  # set ip4, netmask or broadcast address
             ifr += sockaddr(AF_INET, param[0])
         elif ifru == sioch.SIOCGIFFLAGS:  # get flags
-            ifr += struct.pack('{0}x'.format(IFFLAGLEN))
+            ifr += struct.pack("{0}x".format(IFFLAGLEN))
         elif ifru == sioch.SIOCSIFFLAGS:  # set flags
             ifr += struct.pack(ifr_flags, param[0])
         elif ifru == sioch.SIOCGIFINDEX:  # get if index
-            ifr += struct.pack('{0}x'.format(IFIFINDEXLEN))
+            ifr += struct.pack("{0}x".format(IFIFINDEXLEN))
         elif ifru == sioch.SIOCGIWNAME:  # get iw name
-            ifr += struct.pack('{0}x'.format(IWNAMELEN))
+            ifr += struct.pack("{0}x".format(IWNAMELEN))
         elif ifru == sioch.SIOCGIWTXPOW:  # get tx pwr
-            ifr += struct.pack('{0}x'.format(IWTXPWRLEN))
+            ifr += struct.pack("{0}x".format(IWTXPWRLEN))
         else:
             raise AttributeError("ifru {0} not supported".format(ifru))
     except (TypeError, IndexError):

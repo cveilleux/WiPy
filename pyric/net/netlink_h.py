@@ -33,14 +33,14 @@ A port of netlink.h, netlink/attr.h netlink/errno.h to python
 
 """
 
-__name__ = 'netlink_h'
-__license__ = 'GPLv3'
-__version__ = '0.0.3'
-__date__ = 'March 2016'
-__author__ = 'Dale Patterson'
-__maintainer__ = 'Dale Patterson'
-__email__ = 'wraith.wireless@yandex.com'
-__status__ = 'Production'
+__name__ = "netlink_h"
+__license__ = "GPLv3"
+__version__ = "0.0.3"
+__date__ = "March 2016"
+__author__ = "Dale Patterson"
+__maintainer__ = "Dale Patterson"
+__email__ = "wraith.wireless@yandex.com"
+__status__ = "Production"
 
 import struct
 
@@ -61,7 +61,7 @@ NETLINK_IP6_FW = 13
 NETLINK_DNRTMSG = 14  # DECnet routing messages
 NETLINK_KOBJECT_UEVENT = 15  # Kernel messages to userspace
 NETLINK_GENERIC = 16
-#leave room for NETLINK_DM (DM Events)
+# leave room for NETLINK_DM (DM Events)
 NETLINK_SCSITRANSPORT = 18  # SCSI Transports
 NETLINK_ECRYPTFS = 19
 NETLINK_RDMA = 20
@@ -95,8 +95,7 @@ def nlmsghdr(mlen, nltype, flags, seq, pid):
      :param pid: process port id
      :returns: packed netlink msg header
     """
-    return struct.pack(nl_nlmsghdr, NLMSGHDRLEN + mlen, nltype, flags, seq,
-                       pid)
+    return struct.pack(nl_nlmsghdr, NLMSGHDRLEN + mlen, nltype, flags, seq, pid)
 
 
 # Flags values
@@ -110,7 +109,7 @@ NLM_F_DUMP_INTR = 16  # Dump was inconsistent due to sequence change
 NLM_F_ROOT = 0x100  # specify tree	root
 NLM_F_MATCH = 0x200  # return all matching
 NLM_F_ATOMIC = 0x400  # atomic GET
-NLM_F_DUMP = (NLM_F_ROOT | NLM_F_MATCH)
+NLM_F_DUMP = NLM_F_ROOT | NLM_F_MATCH
 
 # Modifiers to NEW request
 NLM_F_REPLACE = 0x100  # Override existing
@@ -236,8 +235,19 @@ NETLINK_CONNECTED = 1
   attributes but are not seperated by pad bytes.
 """
 NLA_DATATYPES = [
-    'unspec', 'u8', 'u16', 'u32', 'u64', 'string', 'flag', 'msecs', 'nested',
-    'set_u8', 'set_u16', 'set_u32', 'set_u64'
+    "unspec",
+    "u8",
+    "u16",
+    "u32",
+    "u64",
+    "string",
+    "flag",
+    "msecs",
+    "nested",
+    "set_u8",
+    "set_u16",
+    "set_u32",
+    "set_u64",
 ]
 NLA_ERROR = -1  # my own -> failed to unpack attribute, treat as unspec
 NLA_UNSPEC = 0  # Unspecified type, binary data chunk
@@ -287,8 +297,8 @@ def nlattrhdr(alen, atype):
  * Note: The N and O flag are mutually exclusive.
  */
 """
-NLA_F_NESTED = (1 << 15)
-NLA_F_NET_BYTEORDER = (1 << 14)
+NLA_F_NESTED = 1 << 15
+NLA_F_NET_BYTEORDER = 1 << 14
 NLA_TYPE_MASK = ~(NLA_F_NESTED | NLA_F_NET_BYTEORDER)
 
 # defined error codes

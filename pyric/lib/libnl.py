@@ -30,14 +30,14 @@ see http://www.carisma.slowglass.com/~tgr/libnl/doc/core.html
 
 """
 
-__name__ = 'libnl'
-__license__ = 'GPLv3'
-__version__ = '0.1.1'
-__date__ = 'July 2016'
-__author__ = 'Dale Patterson'
-__maintainer__ = 'Dale Patterson'
-__email__ = 'wraith.wireless@yandex.com'
-__status__ = 'Production'
+__name__ = "libnl"
+__license__ = "GPLv3"
+__version__ = "0.1.1"
+__date__ = "July 2016"
+__author__ = "Dale Patterson"
+__maintainer__ = "Dale Patterson"
+__email__ = "wraith.wireless@yandex.com"
+__status__ = "Production"
 
 from time import time
 from os import getpid, strerror
@@ -49,6 +49,7 @@ import pyric.net.netlink_h as nlh
 import pyric.net.genetlink_h as genlh
 from pyric.net.policy import nla_datatype
 import sys
+
 _PY3_ = sys.version_info.major == 3
 
 
@@ -81,77 +82,79 @@ class NLSocket(dict):
     def __repr__(self):
         """ :returns: description """
         fmt = "NLSocket(fd: {0}, pid: {1}, grpm: {2}, seq: {3}, tx: {4}, rx: {5})"
-        return fmt.format(self.fd, self.pid, self.grpm, self.seq, self.tx,
-                          self.rx)
+        return fmt.format(self.fd, self.pid, self.grpm, self.seq, self.tx, self.rx)
 
     @property
     def sock(self):
-        return self['sock']
+        return self["sock"]
 
     @property
     def fd(self):
-        return self['sock'].fileno()
+        return self["sock"].fileno()
 
     @property
     def tx(self):
-        return self['sock'].getsockopt(socket.SOL_SOCKET, socket.SO_SNDBUF)
+        return self["sock"].getsockopt(socket.SOL_SOCKET, socket.SO_SNDBUF)
 
     @tx.setter
     def tx(self, v):
         if v < 128 or v > _maxbufsz_():
             raise error(errno.EINVAL, "Invalid buffer size")
-        self['sock'].setsockopt(socket.SOL_SOCKET, socket.SO_SNDBUF, v)
+        self["sock"].setsockopt(socket.SOL_SOCKET, socket.SO_SNDBUF, v)
 
     @property
     def rx(self):
-        return self['sock'].getsockopt(socket.SOL_SOCKET, socket.SO_RCVBUF)
+        return self["sock"].getsockopt(socket.SOL_SOCKET, socket.SO_RCVBUF)
 
     @rx.setter
     def rx(self, v):
         if v < 128 or v > _maxbufsz_():
             raise error(errno.EINVAL, "Invalid buffer size")
-        self['sock'].setsockopt(socket.SOL_SOCKET, socket.SO_RCVBUF, v)
+        self["sock"].setsockopt(socket.SOL_SOCKET, socket.SO_RCVBUF, v)
 
     @property
     def pid(self):
-        return self['pid']
+        return self["pid"]
 
     @pid.setter
     def pid(self, v):
-        if v < 1: raise error(errno.EINVAL, "Invalid port id")
-        self['pid'] = v
+        if v < 1:
+            raise error(errno.EINVAL, "Invalid port id")
+        self["pid"] = v
 
     @property
     def grpm(self):
-        return self['grpm']
+        return self["grpm"]
 
     @grpm.setter
     def grpm(self, v):
-        self['grpm'] = v
+        self["grpm"] = v
 
     @property
     def seq(self):
-        return self['seq']
+        return self["seq"]
 
     @seq.setter
     def seq(self, v):
-        if v < 1: raise error(errno.EINVAL, "Invalid sequence number")
-        self['seq'] = v
+        if v < 1:
+            raise error(errno.EINVAL, "Invalid sequence number")
+        self["seq"] = v
 
     @property
     def timeout(self):
-        return self['sock'].gettimeout()
+        return self["sock"].gettimeout()
 
     @timeout.setter
     def timeout(self, v):
-        if v and v < 0: raise error(errno.EINVAL, "Invalid timeout value")
-        self['sock'].settimeout(v)
+        if v and v < 0:
+            raise error(errno.EINVAL, "Invalid timeout value")
+        self["sock"].settimeout(v)
 
     #### wrap socket functions
 
     def incr(self):
         """ increments seq num """
-        self['seq'] += 1
+        self["seq"] += 1
 
     def send(self, pkt):
         """
@@ -159,22 +162,22 @@ class NLSocket(dict):
          :param pkt: data to be sent
          :returns: bytes sent
         """
-        return self['sock'].send(pkt)
+        return self["sock"].send(pkt)
 
     def recv(self):
         """ :returns: msg from kernel """
-        return self['sock'].recv(self.rx)
+        return self["sock"].recv(self.rx)
 
     def close(self):
         """ closes the socket """
-        if self['sock']: self['sock'].close()
-        self['sock'] = self['fid'] = None
-        self['pid'] = self['grpm'] = self['seq'] = None
-        self['rx'] = self['tx'] = None
+        if self["sock"]:
+            self["sock"].close()
+        self["sock"] = self["fid"] = None
+        self["pid"] = self["grpm"] = self["seq"] = None
+        self["rx"] = self["tx"] = None
 
 
-def nl_socket_alloc(pid=None, grps=0, seq=None, rx=None, tx=None,
-                    timeout=None):
+def nl_socket_alloc(pid=None, grps=0, seq=None, rx=None, tx=None, timeout=None):
     """
      create a netlink socket
      :param pid: port id
@@ -190,9 +193,11 @@ def nl_socket_alloc(pid=None, grps=0, seq=None, rx=None, tx=None,
     """
     # set & validate paramaters
     pid = pid or getpid() + int(time())  # allow multiple sockets on this host
-    if pid < 1: raise error(errno.EINVAL, "Invalid port id")
+    if pid < 1:
+        raise error(errno.EINVAL, "Invalid port id")
     seq = seq or int(time())
-    if seq < 1: raise error(errno.EINVAL, "Invalid sequence number")
+    if seq < 1:
+        raise error(errno.EINVAL, "Invalid sequence number")
     rx = rx or BUFSZ
     if rx < 128 or rx > _maxbufsz_():
         raise error(errno.EINVAL, "Invalid rx size")
@@ -202,22 +207,16 @@ def nl_socket_alloc(pid=None, grps=0, seq=None, rx=None, tx=None,
 
     # create the socket and return it
     try:
-        s = socket.socket(socket.AF_NETLINK, socket.SOCK_RAW,
-                          nlh.NETLINK_GENERIC)
+        s = socket.socket(socket.AF_NETLINK, socket.SOCK_RAW, nlh.NETLINK_GENERIC)
         s.setsockopt(socket.SOL_SOCKET, socket.SO_SNDBUF, tx)
         s.setsockopt(socket.SOL_SOCKET, socket.SO_RCVBUF, rx)
         s.settimeout(timeout)
         s.bind((pid, grps))
     except socket.error as e:
         raise error(e.errno, e.strerror)
-    return NLSocket({
-        'sock': s,
-        'tx': tx,
-        'rx': rx,
-        'pid': pid,
-        'grpm': grps,
-        'seq': seq
-    })
+    return NLSocket(
+        {"sock": s, "tx": tx, "rx": rx, "pid": pid, "grpm": grps, "seq": seq}
+    )
 
 
 def nl_socket_free(sock):
@@ -279,17 +278,20 @@ def nl_recvmsg(sock):
             _ = nlmsg_fromstream(sock.recv())
         except error as e:
             # on success, just return the orginal message
-            if e.errno == nlh.NLE_SUCCESS: pass
-            else: raise
+            if e.errno == nlh.NLE_SUCCESS:
+                pass
+            else:
+                raise
         if sock.seq != msg.seq:
             raise error(errno.EBADMSG, "Seq. # out of order")
         return msg
     except socket.timeout:
         raise error(-1, "Socket timed out")
-    #except socket.error as e: # this became in issue in python 3
+    # except socket.error as e: # this became in issue in python 3
     #    raise error(errno.ENOTSOCK,e)
     except error as e:
-        if e.errno == nlh.NLE_SUCCESS: return nlh.NLE_SUCCESS
+        if e.errno == nlh.NLE_SUCCESS:
+            return nlh.NLE_SUCCESS
         raise  # rethrow
     finally:
         # always increment the sequence #
@@ -373,8 +375,7 @@ class GENLMsg(dict):
                 v = hexlify(v)
             elif d == nlh.NLA_NESTED:
                 v = [(idx, hexlify(attr)) for idx, attr in v]
-            ret += "\t{0}: type={1},datatype={2}\n\tvalue={3}\n".format(
-                i, a, d, v)
+            ret += "\t{0}: type={1},datatype={2}\n\tvalue={3}\n".format(i, a, d, v)
         return ret
 
     #### PROPERTIES
@@ -389,80 +390,80 @@ class GENLMsg(dict):
 
     @property
     def nltype(self):
-        return self['type']
+        return self["type"]
 
     @nltype.setter
     def nltype(self, v):
         if v < 0:
             raise error(errno.ERANGE, "Netlink type {0} is invalid".format(v))
-        self['type'] = v
+        self["type"] = v
 
     @property
     def flags(self):
-        return self['flags']
+        return self["flags"]
 
     @flags.setter
     def flags(self, v):
-        self['flags'] = v
+        self["flags"] = v
 
     @property
     def seq(self):
-        return self['seq']
+        return self["seq"]
 
     @seq.setter
     def seq(self, v):
-        if v < 1: raise error(errno.ERANGE, "Invalid seq. number")
-        self['seq'] = v
+        if v < 1:
+            raise error(errno.ERANGE, "Invalid seq. number")
+        self["seq"] = v
 
     @property
     def pid(self):
-        return self['pid']
+        return self["pid"]
 
     @pid.setter
     def pid(self, v):
-        if v < 1: raise error(errno.ERANGE, "Invalid port id")
-        self['pid'] = v
+        if v < 1:
+            raise error(errno.ERANGE, "Invalid port id")
+        self["pid"] = v
 
     @property
     def cmd(self):
-        return self['cmd']
+        return self["cmd"]
 
     @cmd.setter
     def cmd(self, v):
-        if v < 0: raise error(errno.ERANGE, "Invalid cmd")
-        self['cmd'] = v
+        if v < 0:
+            raise error(errno.ERANGE, "Invalid cmd")
+        self["cmd"] = v
 
     @property
     def attrs(self):
-        return self['attrs']
+        return self["attrs"]
 
     @property
     def numattrs(self):
-        return len(self['attrs'])
+        return len(self["attrs"])
 
     #### METHODS
 
     def tostream(self):
         """ :returns packed netlink message """
         payload = genlh.genlmsghdr(
-            self['cmd'])  # nlhsghdr, genlmsghdr end at boundary of 4
-        for a, v, d in self['attrs']:
+            self["cmd"]
+        )  # nlhsghdr, genlmsghdr end at boundary of 4
+        for a, v, d in self["attrs"]:
             try:
                 payload += _attrpack_(a, v, d)
             except (TypeError, AttributeError, struct.error) as e:
-                #if d == nlh.NLA_NESTED: pass # we need to fix here
+                # if d == nlh.NLA_NESTED: pass # we need to fix here
                 raise error(-1, "Packing {0} {1}: {2}".format(a, v, e))
-        return nlh.nlmsghdr(
-            len(payload), self.nltype, self.flags, self.seq,
-            self.pid) + payload
+        return (
+            nlh.nlmsghdr(len(payload), self.nltype, self.flags, self.seq, self.pid)
+            + payload
+        )
 
 
-def nlmsg_new(nltype=None,
-              cmd=None,
-              seq=None,
-              pid=None,
-              flags=None,
-              attrs=None):
+def nlmsg_new(nltype=None, cmd=None, seq=None, pid=None, flags=None, attrs=None):
     """
      :param nltype: message content
      :param cmd: genetlink service type
@@ -477,14 +478,16 @@ def nlmsg_new(nltype=None,
      NOTE:
       # version is hardcoded as 1 and len is calculated
     """
-    return GENLMsg({
-        'type': nltype or nlh.NETLINK_GENERIC,
-        'flags': flags or (nlh.NLM_F_REQUEST | nlh.NLM_F_ACK),
-        'seq': seq or int(time()),
-        'pid': pid or getpid(),
-        'cmd': cmd or genlh.CTRL_CMD_UNSPEC,
-        'attrs': attrs or []
-    })
+    return GENLMsg(
+        {
+            "type": nltype or nlh.NETLINK_GENERIC,
+            "flags": flags or (nlh.NLM_F_REQUEST | nlh.NLM_F_ACK),
+            "seq": seq or int(time()),
+            "pid": pid or getpid(),
+            "cmd": cmd or genlh.CTRL_CMD_UNSPEC,
+            "attrs": attrs or [],
+        }
+    )
 
 
 def nlmsg_fromstream(stream, override=False):
@@ -501,8 +504,7 @@ def nlmsg_fromstream(stream, override=False):
             # have an (possible) ack/nack i.e. error msg
             e = struct.unpack_from(nlh.nl_nlmsgerr, stream, nlh.NLMSGHDRLEN)[0]
             raise error(abs(e), strerror(abs(e)))
-        c, _, _ = struct.unpack_from(genlh.genl_genlmsghdr, stream,
-                                     nlh.NLMSGHDRLEN)
+        c, _, _ = struct.unpack_from(genlh.genl_genlmsghdr, stream, nlh.NLMSGHDRLEN)
     except struct.error as e:
         raise error(-1, "Error parsing headers: {0}".format(e))
 
@@ -522,7 +524,7 @@ def nla_parse(msg, l, mtype, stream, idx):
      :param idx: current index in stream
     """
     # get policy family NOTE: cheating here, we know it's either generic or nl80211
-    pol = 'ctrl_attr' if mtype == nlh.NETLINK_GENERIC else 'nl80211_attr'
+    pol = "ctrl_attr" if mtype == nlh.NETLINK_GENERIC else "nl80211_attr"
     attrlen = nlh.NLATTRHDRLEN  # pull out these to avoid
     attrhdr = nlh.nl_nlattrhdr  # doing so in each iteration
 
@@ -530,11 +532,10 @@ def nla_parse(msg, l, mtype, stream, idx):
     while idx < l:
         a = atype = alen = None  # shut pycharm up about unitialized variable
         try:
-            alen, atype = struct.unpack_from(attrhdr, stream,
-                                             idx)  # get length, type
+            alen, atype = struct.unpack_from(attrhdr, stream, idx)  # get length, type
             idx += attrlen  # move to attr start
             alen -= attrlen  # attr length (w/ padding)
-            a = stream[idx:idx + alen]  # attr value
+            a = stream[idx : idx + alen]  # attr value
             dt = nla_datatype(pol, atype)  # attr datatype
 
             # Note: we use unpack_from which will ignore the null bytes in numeric
@@ -543,21 +544,33 @@ def nla_parse(msg, l, mtype, stream, idx):
             if _PY3_ and (dt == nlh.NLA_STRING or dt == nlh.NLA_UNSPEC):
                 # python 3 returns a bytes object, convert to string
                 try:
-                    a = a.decode('ascii')
+                    a = a.decode("ascii")
                 except UnicodeDecodeError:
                     pass  # Fuck You Python 3
-            if dt == nlh.NLA_STRING: a = _nla_strip_(a)
-            elif dt == nlh.NLA_U8: a = struct.unpack_from("B", a, 0)[0]
-            elif dt == nlh.NLA_U16: a = struct.unpack_from("H", a, 0)[0]
-            elif dt == nlh.NLA_U32: a = struct.unpack_from("I", a, 0)[0]
-            elif dt == nlh.NLA_U64: a = struct.unpack_from("Q", a, 0)[0]
-            elif dt == nlh.NLA_FLAG: a = ''  # flags should be 0 size
-            elif dt == nlh.NLA_MSECS: a = struct.unpack_from("Q", a, 0)[0]
-            elif dt == nlh.NLA_SET_U8: a = nla_parse_set(a, nlh.NLA_U8)
-            elif dt == nlh.NLA_SET_U16: a = nla_parse_set(a, nlh.NLA_U16)
-            elif dt == nlh.NLA_SET_U32: a = nla_parse_set(a, nlh.NLA_U32)
-            elif dt == nlh.NLA_SET_U64: a = nla_parse_set(a, nlh.NLA_U64)
-            elif dt == nlh.NLA_NESTED: a = nla_parse_nested(a)
+            if dt == nlh.NLA_STRING:
+                a = _nla_strip_(a)
+            elif dt == nlh.NLA_U8:
+                a = struct.unpack_from("B", a, 0)[0]
+            elif dt == nlh.NLA_U16:
+                a = struct.unpack_from("H", a, 0)[0]
+            elif dt == nlh.NLA_U32:
+                a = struct.unpack_from("I", a, 0)[0]
+            elif dt == nlh.NLA_U64:
+                a = struct.unpack_from("Q", a, 0)[0]
+            elif dt == nlh.NLA_FLAG:
+                a = ""  # flags should be 0 size
+            elif dt == nlh.NLA_MSECS:
+                a = struct.unpack_from("Q", a, 0)[0]
+            elif dt == nlh.NLA_SET_U8:
+                a = nla_parse_set(a, nlh.NLA_U8)
+            elif dt == nlh.NLA_SET_U16:
+                a = nla_parse_set(a, nlh.NLA_U16)
+            elif dt == nlh.NLA_SET_U32:
+                a = nla_parse_set(a, nlh.NLA_U32)
+            elif dt == nlh.NLA_SET_U64:
+                a = nla_parse_set(a, nlh.NLA_U64)
+            elif dt == nlh.NLA_NESTED:
+                a = nla_parse_nested(a)
             nla_put(msg, a, atype, dt)
         except struct.error:  # append as Error, stripping null bytes
             nla_put(msg, _nla_strip_(a), atype, nlh.NLA_ERROR)
@@ -568,8 +581,8 @@ def nla_parse(msg, l, mtype, stream, idx):
                 raise
         except MemoryError as e:  # hopefully don't get here
             raise error(
-                -1, "Attr type {0} of pol {1} failed: {2}".format(
-                    atype, pol, e))
+                -1, "Attr type {0} of pol {1} failed: {2}".format(atype, pol, e)
+            )
         idx = nlh.NLMSG_ALIGN(idx + alen)  # move index to next attr
 
 
@@ -619,11 +632,12 @@ def nla_parse_nested(nested):
     while idx < l:
         # first two bytes define length, including these bytes, length does not
         # include pad byte(s) affixed to end for proper alignment
-        alen = struct.unpack_from('H', nested, idx)[0]
-        if alen == 0: raise error(errno.EINVAL, "Invalid nesting")
-        #ns.append(nested[idx+2:idx+alen]) # don't include the length bytes
-        nattr = nested[idx + 2:idx + alen]
-        ns.append((struct.unpack_from('H', nattr, 0)[0], nattr[2:]))
+        alen = struct.unpack_from("H", nested, idx)[0]
+        if alen == 0:
+            raise error(errno.EINVAL, "Invalid nesting")
+        # ns.append(nested[idx+2:idx+alen]) # don't include the length bytes
+        nattr = nested[idx + 2 : idx + alen]
+        ns.append((struct.unpack_from("H", nattr, 0)[0], nattr[2:]))
         idx += nlh.NLMSG_ALIGN(alen)
     return ns
 
@@ -636,10 +650,14 @@ def nla_parse_set(aset, etype):
      :returns: list of elements in aset
     """
     # get the struct format and element size
-    if etype == nlh.NLA_U8: fmt = "B"
-    elif etype == nlh.NLA_U16: fmt = "H"
-    elif etype == nlh.NLA_U32: fmt = "I"
-    elif etype == nlh.NLA_U64: fmt = "Q"
+    if etype == nlh.NLA_U8:
+        fmt = "B"
+    elif etype == nlh.NLA_U16:
+        fmt = "H"
+    elif etype == nlh.NLA_U32:
+        fmt = "I"
+    elif etype == nlh.NLA_U64:
+        fmt = "Q"
     else:
         raise error(errno.EINVAL, "Set elements are not valid datatype")
     esize = struct.calcsize(fmt)
@@ -648,7 +666,8 @@ def nla_parse_set(aset, etype):
     idx = 0
     asize = len(aset)
     while idx < asize:
-        if asize - idx < esize: break  # don't attempt to parse pad bytes
+        if asize - idx < esize:
+            break  # don't attempt to parse pad bytes
         try:
             s = struct.unpack_from(fmt, aset, idx)[0]
             ss.append(s)
@@ -666,8 +685,9 @@ def nla_put(msg, v, a, d):
      :param a: attribute type
      :param d: attribute datatype
     """
-    if d > nlh.NLA_TYPE_MAX: raise error(errno.ERANGE, "Value type is invalid")
-    msg['attrs'].append((a, v, d))
+    if d > nlh.NLA_TYPE_MAX:
+        raise error(errno.ERANGE, "Value type is invalid")
+    msg["attrs"].append((a, v, d))
 
 
 # nla_put_* append data of specified datatype
@@ -732,8 +752,9 @@ def nla_putat(msg, i, v, a, d):
      :param a: attribute type
      :param d: attribute datatype
     """
-    if d > nlh.NLA_TYPE_MAX: raise error(errno.ERANGE, "Invalid datatype")
-    msg['attrs'][i] = (a, v, d)
+    if d > nlh.NLA_TYPE_MAX:
+        raise error(errno.ERANGE, "Invalid datatype")
+    msg["attrs"][i] = (a, v, d)
 
 
 def nla_pop(msg, i):
@@ -744,7 +765,7 @@ def nla_pop(msg, i):
      :returns: the 'popped' attribute
     """
     attr = msg.attrs[i]
-    del msg['attrs'][i]
+    del msg["attrs"][i]
     return attr
 
 
@@ -758,8 +779,10 @@ def nla_find(msg, a, value=True):
     """
     for t, v, d in msg.attrs:
         if t == a:
-            if value: return v
-            else: return t, v, d
+            if value:
+                return v
+            else:
+                return t, v, d
     return None
 
 
@@ -772,8 +795,10 @@ def nla_get(msg, i, value=True):
      :returns: attribute at i
     """
     attr = msg.attrs[i]
-    if value: return attr[1]
-    else: return attr
+    if value:
+        return attr[1]
+    else:
+        return attr
 
 
 #### FILE PRIVATE ####
@@ -788,7 +813,8 @@ def _nla_strip_(v):
     """
     try:
         for i, e in reversed(list(enumerate(v))):
-            if e != '\x00': return v[:i + 1]
+            if e != "\x00":
+                return v[: i + 1]
         return v
     except IndexError:
         return v
@@ -802,33 +828,42 @@ def _attrpack_(a, v, d):
      :returns: packed attribute w/ padding if necessary
     """
     attr = ""  # appease PyCharm
-    if d == nlh.NLA_UNSPEC: attr = v
-    elif d == nlh.NLA_U8: attr = struct.pack("B", v)
-    elif d == nlh.NLA_U16: attr = struct.pack("H", v)
-    elif d == nlh.NLA_U32: attr = struct.pack("I", v)
-    elif d == nlh.NLA_U64: attr = struct.pack("Q", v)
+    if d == nlh.NLA_UNSPEC:
+        attr = v
+    elif d == nlh.NLA_U8:
+        attr = struct.pack("B", v)
+    elif d == nlh.NLA_U16:
+        attr = struct.pack("H", v)
+    elif d == nlh.NLA_U32:
+        attr = struct.pack("I", v)
+    elif d == nlh.NLA_U64:
+        attr = struct.pack("Q", v)
     elif d == nlh.NLA_STRING:
         if _PY3_:
             # noinspection PyArgumentList
-            v = bytes(v, 'ascii')
+            v = bytes(v, "ascii")
         attr = struct.pack("{0}sx".format(len(v)), v)
     elif d == nlh.NLA_FLAG:
-        attr = ''  # a 0 sized attribute
+        attr = ""  # a 0 sized attribute
     elif d == nlh.NLA_MSECS:
         attr = struct.pack("Q", v)
     elif d == nlh.NLA_NESTED:
         # assumes a single layer of nesting
         for nested in v:
             # prepend packed index to the already packed attribute & align it
-            nattr = struct.pack('H', nested[0]) + nested[1]
+            nattr = struct.pack("H", nested[0]) + nested[1]
             nattr += struct.pack("{0}x".format(nlh.NLMSG_ALIGNBY(len(nattr))))
             attr += nattr
     else:
         fmt = ""  # appease PyCharm
-        if d == nlh.NLA_SET_U8: fmt = "B"
-        elif d == nlh.NLA_SET_U16: fmt = "H"
-        elif d == nlh.NLA_SET_U32: fmt = "I"
-        elif d == nlh.NLA_SET_U64: fmt = "Q"
+        if d == nlh.NLA_SET_U8:
+            fmt = "B"
+        elif d == nlh.NLA_SET_U16:
+            fmt = "H"
+        elif d == nlh.NLA_SET_U32:
+            fmt = "I"
+        elif d == nlh.NLA_SET_U64:
+            fmt = "Q"
         for el in v:
             attr += struct.pack(fmt, el)
     attr = nlh.nlattrhdr(len(attr), a) + attr
@@ -840,10 +875,11 @@ def _maxbufsz_():
     """ :returns: maximum allowable socket buffer size """
     fin = None
     try:
-        fin = open('/proc/sys/net/core/rmem_max')
+        fin = open("/proc/sys/net/core/rmem_max")
         return int(fin.read().strip()) / 2
     except (IOError, ValueError):
         # return a hardcoded value
         return 2097152
     finally:
-        if fin: fin.close()
+        if fin:
+            fin.close()

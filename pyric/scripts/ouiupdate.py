@@ -24,32 +24,29 @@ Fetchs and stores oui data from IEEE
 """
 from __future__ import print_function  # python 2to3 compability
 
-#__name__ = 'ouiupdate'
-__license__ = 'GPLv3'
-__version__ = '0.0.1'
-__date__ = 'January 2017'
-__author__ = 'Dale Patterson'
-__maintainer__ = 'Dale Patterson'
-__email__ = 'wraith.wireless@yandex.com'
-__status__ = 'Production'
+# __name__ = 'ouiupdate'
+__license__ = "GPLv3"
+__version__ = "0.0.1"
+__date__ = "January 2017"
+__author__ = "Dale Patterson"
+__maintainer__ = "Dale Patterson"
+__email__ = "wraith.wireless@yandex.com"
+__status__ = "Production"
 
 import argparse as ap
 import pyric.utils.ouifetch as ouifetch
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     # create arg parser and parse command line args
     print("IEEE OUI Fetch")
     argp = ap.ArgumentParser(description="IEEE OUI fetch and parse")
-    argp.add_argument('-p', '--path', help="Path to write parsed file")
+    argp.add_argument("-p", "--path", help="Path to write parsed file")
     argp.add_argument(
-        '-v',
-        '--verbose',
-        action='store_true',
-        help="Display operations to stdout")
+        "-v", "--verbose", action="store_true", help="Display operations to stdout"
+    )
     argp.add_argument(
-        '--version',
-        action='version',
-        version="OUI Fetch {0}".format(__version__))
+        "--version", action="version", version="OUI Fetch {0}".format(__version__)
+    )
     args = argp.parse_args()
     verbose = args.verbose
     path = args.path

@@ -4,4 +4,4 @@ init:
 test:
 
 		pipenv run pytest tests
-		pipenv run yapf -rdp pyric/
+		pipenv run black --check --diff pyric/

@@ -50,14 +50,14 @@ NOTE:
   
 """
 
-__name__ = 'rfkill_h'
-__license__ = 'GPLv3'
-__version__ = '0.0.1'
-__date__ = 'June 2016'
-__author__ = 'Dale Patterson'
-__maintainer__ = 'Dale Patterson'
-__email__ = 'wraith.wireless@yandex.com'
-__status__ = 'Production'
+__name__ = "rfkill_h"
+__license__ = "GPLv3"
+__version__ = "0.0.1"
+__date__ = "June 2016"
+__author__ = "Dale Patterson"
+__maintainer__ = "Dale Patterson"
+__email__ = "wraith.wireless@yandex.com"
+__status__ = "Production"
 
 import struct
 
@@ -80,9 +80,7 @@ RFKILL_STATE_HARD_BLOCKED = 2
  * @NUM_RFKILL_TYPES: number of defined rfkill types
  */
 """
-RFKILL_TYPES = [
-    'all', 'wlan', 'bluetooth', 'uwb', 'wimax', 'wwan', 'gps', 'fm', 'nfc'
-]
+RFKILL_TYPES = ["all", "wlan", "bluetooth", "uwb", "wimax", "wwan", "gps", "fm", "nfc"]
 RFKILL_TYPE_ALL = 0
 RFKILL_TYPE_WLAN = 1
 RFKILL_TYPE_BLUETOOTH = 2

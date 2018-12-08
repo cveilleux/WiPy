@@ -29,11 +29,11 @@ Documentation to include lookup functionality for nl80211 commands and attribute
 
 """
 
-__name__ = 'nlhelp'
-__license__ = 'GPLv3'
-__version__ = '0.0.1'
-__date__ = 'April 2016'
-__author__ = 'Dale Patterson'
-__maintainer__ = 'Dale Patterson'
-__email__ = 'wraith.wireless@yandex.com'
-__status__ = 'Production'
+__name__ = "nlhelp"
+__license__ = "GPLv3"
+__version__ = "0.0.1"
+__date__ = "April 2016"
+__author__ = "Dale Patterson"
+__maintainer__ = "Dale Patterson"
+__email__ = "wraith.wireless@yandex.com"
+__status__ = "Production"

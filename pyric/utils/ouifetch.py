@@ -24,36 +24,39 @@ oui dict as determined by IEEE oui.txt
 """
 from __future__ import print_function  # python 2to3 compability
 
-__name__ = 'ouifetch'
-__license__ = 'GPLv3'
-__version__ = '0.0.2'
-__date__ = 'July 2016'
-__author__ = 'Dale Patterson'
-__maintainer__ = 'Dale Patterson'
-__email__ = 'wraith.wireless@yandex.com'
-__status__ = 'Production'
+__name__ = "ouifetch"
+__license__ = "GPLv3"
+__version__ = "0.0.2"
+__date__ = "July 2016"
+__author__ = "Dale Patterson"
+__maintainer__ = "Dale Patterson"
+__email__ = "wraith.wireless@yandex.com"
+__status__ = "Production"
 
 try:
     # load urllib related for python 2
     # noinspection PyCompatibility
     from urllib2 import Request as url_request
+
     # noinspection PyCompatibility
     from urllib2 import urlopen as url_open
+
     # noinspection PyCompatibility
     from urllib2 import URLError as url_error
 except ImportError:
     # noinspection PyCompatibility,PyUnresolvedReferences
     from urllib.request import Request as url_request
+
     # noinspection PyCompatibility,PyUnresolvedReferences
     from urllib.request import urlopen as url_open
+
     # noinspection PyUnresolvedReferences
     from urllib import error as url_error
 import os, sys, datetime, time
 import pyric
 
-OUIURL = 'http://standards-oui.ieee.org/oui.txt'
-OUIPATH = os.path.join(
-    os.path.dirname(os.path.abspath(__file__)), 'data/oui.txt')
+OUIURL = "http://standards-oui.ieee.org/oui.txt"
+OUIPATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "data/oui.txt")
 
 
 def load(opath=None):
@@ -65,12 +68,13 @@ def load(opath=None):
     fin = None
     ouis = {}
 
-    if not opath: opath = OUIPATH
+    if not opath:
+        opath = OUIPATH
 
     try:
         fin = open(opath)
         for line in fin.readlines()[1:]:
-            o, m = line.strip().split('\t')
+            o, m = line.strip().split("\t")
             ouis[o.lower()] = m[0:100]
         fin.close()
     except IndexError:
@@ -78,7 +82,8 @@ def load(opath=None):
     except IOError as e:
         raise pyric.error(e.errno, e.strerror)
     finally:
-        if fin and not fin.closed: fin.close()
+        if fin and not fin.closed:
+            fin.close()
     return ouis
 
 
@@ -89,7 +94,8 @@ def fetch(opath=None, verbose=False):
      :param verbose: write updates to stdout
     """
     # determine if data path is legit
-    if opath is None: opath = OUIPATH
+    if opath is None:
+        opath = OUIPATH
     if not os.path.isdir(os.path.dirname(opath)):
         print("Path to data is incorrect {0}".format(opath))
         sys.exit(1)
@@ -99,36 +105,40 @@ def fetch(opath=None, verbose=False):
 
     # set up url request
     req = url_request(OUIURL)
-    req.add_header('User-Agent',
-                   "PyRIC +https://github.com/wraith-wireless/PyRIC/")
+    req.add_header("User-Agent", "PyRIC +https://github.com/wraith-wireless/PyRIC/")
     try:
         # retrieve the oui file and parse out generated date
-        if verbose: print('Fetching ', OUIURL)
+        if verbose:
+            print("Fetching ", OUIURL)
         res = url_open(req)
-        if verbose: print("Parsing OUI file")
+        if verbose:
+            print("Parsing OUI file")
 
-        if verbose: print("Opening data file {0} for writing".format(opath))
-        fout = open(opath, 'w')
-        gen = datetime.datetime.utcnow().isoformat(
+        if verbose:
+            print("Opening data file {0} for writing".format(opath))
+        fout = open(opath, "w")
+        gen = (
+            datetime.datetime.utcnow().isoformat()
         )  # use current time as the first line
-        fout.write(gen + '\n')
+        fout.write(gen + "\n")
 
         # pull out ouis
         t = time.time()
         cnt = 0
         for l in res:
-            if '(hex)' in l:
+            if "(hex)" in l:
                 # extract oui and manufacturer
-                oui, manuf = l.split('(hex)')
-                oui = oui.strip().replace('-', ':')
+                oui, manuf = l.split("(hex)")
+                oui = oui.strip().replace("-", ":")
                 manuf = manuf.strip()
                 if manuf.startswith("IEEE REGISTRATION AUTHORITY"):
                     manuf = "IEEE REGISTRATION AUTHORITY"
 
                 # write to file & update count
-                fout.write('{0}\t{1}\n'.format(oui, manuf))
+                fout.write("{0}\t{1}\n".format(oui, manuf))
                 cnt += 1
-                if verbose: print("{0}:\t{1}\t{2}".format(cnt, oui, manuf))
+                if verbose:
+                    print("{0}:\t{1}\t{2}".format(cnt, oui, manuf))
         print("Wrote {0} OUIs in {1:.3} secs".format(cnt, time.time() - t))
     except url_error as e:
         print("Error fetching oui file: {0}".format(e))
@@ -137,10 +147,11 @@ def fetch(opath=None, verbose=False):
     except Exception as e:
         print("Error parsing oui file: {0}".format(e))
     finally:
-        if fout: fout.close()
+        if fout:
+            fout.close()
 
 
-#if __name__ == '__main__':
+# if __name__ == '__main__':
 #    # create arg parser and parse command line args
 #    print "OUI Fetch {0}".format(__version__)
 #    argp = ap.ArgumentParser(description="IEEE OUI fetch and parse")

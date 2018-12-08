@@ -8,12 +8,14 @@
 """
 EUNDEF = -1  # undefined error
 from errno import *  # make all errno errors pyric errors
+
 errorcode[EUNDEF] = "EUNDEF"  # add ours to errorcode dicts
 
 
 class error(EnvironmentError):
     def __init__(self, errno, errmsg=None):
-        if not errmsg: errmsg = strerror(errno)
+        if not errmsg:
+            errmsg = strerror(errno)
         EnvironmentError.__init__(self, errno, errmsg)
 
 
@@ -23,9 +25,13 @@ def strerror(errno):
     :returns: error message
     """
     import os
-    if errno < 0: return "Undefined error"
-    elif errno == EPERM: return "Superuser privileges required"
-    elif errno == EINVAL: return "Invalid parameter"
+
+    if errno < 0:
+        return "Undefined error"
+    elif errno == EPERM:
+        return "Superuser privileges required"
+    elif errno == EINVAL:
+        return "Invalid parameter"
     elif errno == EBUSY:
         msg = "{0}. Make sure Card is up and no other devices share the same phy"
         return msg.format(os.strerror(EBUSY))

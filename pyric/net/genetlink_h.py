@@ -31,14 +31,14 @@ attributes.
 
 """
 
-__name__ = 'genetlink_h'
-__license__ = 'GPLv3'
-__version__ = '0.0.1'
-__date__ = 'March 2016'
-__author__ = 'Dale Patterson'
-__maintainer__ = 'Dale Patterson'
-__email__ = 'wraith.wireless@yandex.com'
-__status__ = 'Production'
+__name__ = "genetlink_h"
+__license__ = "GPLv3"
+__version__ = "0.0.1"
+__date__ = "March 2016"
+__author__ = "Dale Patterson"
+__maintainer__ = "Dale Patterson"
+__email__ = "wraith.wireless@yandex.com"
+__status__ = "Production"
 
 import struct
 
@@ -66,7 +66,7 @@ def genlmsghdr(cmd, vers=1):
     return struct.pack(genl_genlmsghdr, cmd, vers, 0)
 
 
-#GENL_HDRLEN	NLMSG_ALIGN(sizeof(struct genlmsghdr))
+# GENL_HDRLEN	NLMSG_ALIGN(sizeof(struct genlmsghdr))
 
 GENL_ADMIN_PERM = 0x01
 GENL_CMD_CAP_DO = 0x02
@@ -79,7 +79,7 @@ GENL_ID_CTRL = 0x10  # hardcoded from netlink_h
 GENL_ID_VFS_DQUOT = GENL_ID_CTRL + 1
 GENL_ID_PMCRAID = GENL_ID_CTRL + 2
 
-#Controller
+# Controller
 CTRL_CMD_UNSPEC = 0
 CTRL_CMD_NEWFAMILY = 1
 CTRL_CMD_DELFAMILY = 2

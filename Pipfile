@@ -10,7 +10,7 @@ pycodestyle = "*"
 pydocstyle = "*"
 pyflakes = "*"
 pytest = "*"
-yapf = "*"
+black = "*"
 
 [packages]
 

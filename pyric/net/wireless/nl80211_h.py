@@ -50,18 +50,18 @@ NOTE:
 
 """
 
-__name__ = 'nl80211_h'
-__license__ = 'GPLv3'
-__version__ = '0.0.5'
-__date__ = 'July 2016'
-__author__ = 'Dale Patterson'
-__maintainer__ = 'Dale Patterson'
-__email__ = 'wraith.wireless@yandex.com'
-__status__ = 'Production'
+__name__ = "nl80211_h"
+__license__ = "GPLv3"
+__version__ = "0.0.5"
+__date__ = "July 2016"
+__author__ = "Dale Patterson"
+__maintainer__ = "Dale Patterson"
+__email__ = "wraith.wireless@yandex.com"
+__status__ = "Production"
 
 import struct
 
-NL80211_GENL_NAME = 'nl80211'
+NL80211_GENL_NAME = "nl80211"
 """ new in kernel 4 """
 NL80211_MULTICAST_GROUP_CONFIG = "config"
 NL80211_MULTICAST_GROUP_SCAN = "scan"
@@ -729,7 +729,7 @@ NL80211_CMD_MAX = NL80211_CMD_WIPHY_REG_CHANGE
 # source-level API compatibility
 NL80211_CMD_GET_MESH_PARAMS = NL80211_CMD_GET_MESH_CONFIG
 NL80211_CMD_SET_MESH_PARAMS = NL80211_CMD_SET_MESH_CONFIG
-#NL80211_MESH_SETUP_VENDOR_PATH_SEL_IE = NL80211_MESH_SETUP_IE
+# NL80211_MESH_SETUP_VENDOR_PATH_SEL_IE = NL80211_MESH_SETUP_IE
 """
  * enum nl80211_attrs - nl80211 netlink attributes
  *
@@ -1649,8 +1649,18 @@ NL80211_CQM_TXE_MAX_INTVL = 1800
 """
 # the below string names may not be the same as identified by other programs
 NL80211_IFTYPES = [
-    'unspecified', 'ibss', 'managed', 'AP', 'AP VLAN', 'wds', 'monitor',
-    'mesh', 'p2p_client', 'p2p_go', 'p2p_device', 'ocb'
+    "unspecified",
+    "ibss",
+    "managed",
+    "AP",
+    "AP VLAN",
+    "wds",
+    "monitor",
+    "mesh",
+    "p2p_client",
+    "p2p_go",
+    "p2p_device",
+    "ocb",
 ]
 NL80211_IFTYPE_UNSPECIFIED = 0
 NL80211_IFTYPE_ADHOC = 1
@@ -2243,10 +2253,10 @@ NL80211_RRF_NO_160MHZ = 1 << 16
 NL80211_RRF_PASSIVE_SCAN = NL80211_RRF_NO_IR
 NL80211_RRF_NO_IBSS = NL80211_RRF_NO_IR
 NL80211_RRF_NO_IR = NL80211_RRF_NO_IR
-NL80211_RRF_NO_HT40 = (NL80211_RRF_NO_HT40MINUS | NL80211_RRF_NO_HT40PLUS)
+NL80211_RRF_NO_HT40 = NL80211_RRF_NO_HT40MINUS | NL80211_RRF_NO_HT40PLUS
 NL80211_RRF_GO_CONCURRENT = NL80211_RRF_IR_CONCURRENT
-#/* For backport compatibility with older userspace */
-NL80211_RRF_NO_IR_ALL = (NL80211_RRF_NO_IR | NL80211_RRF_NO_IBSS)
+# /* For backport compatibility with older userspace */
+NL80211_RRF_NO_IR_ALL = NL80211_RRF_NO_IR | NL80211_RRF_NO_IBSS
 """
 /**
  * enum nl80211_dfs_regions - regulatory DFS regions
@@ -2325,7 +2335,7 @@ NL80211_SURVEY_INFO_TIME_SCAN = 9
 NL80211_SURVEY_INFO_MAX = NL80211_SURVEY_INFO_TIME_SCAN
 
 #### new in kernel v 4
-#/* keep old names for compatibility */
+# /* keep old names for compatibility */
 NL80211_SURVEY_INFO_CHANNEL_TIME = NL80211_SURVEY_INFO_TIME
 NL80211_SURVEY_INFO_CHANNEL_TIME_BUSY = NL80211_SURVEY_INFO_TIME_BUSY
 NL80211_SURVEY_INFO_CHANNEL_TIME_EXT_BUSY = NL80211_SURVEY_INFO_TIME_EXT_BUSY
@@ -2353,7 +2363,13 @@ NL80211_SURVEY_INFO_CHANNEL_TIME_TX = NL80211_SURVEY_INFO_TIME_TX
  */
 """
 NL80211_MNTR_FLAGS = [
-    'invalid', 'fcsfail', 'plcpfail', 'control', 'other bss', 'cook', 'active'
+    "invalid",
+    "fcsfail",
+    "plcpfail",
+    "control",
+    "other bss",
+    "cook",
+    "active",
 ]
 __NL80211_MNTR_FLAG_INVALID = 0
 NL80211_MNTR_FLAG_FCSFAIL = 1
@@ -2594,7 +2610,7 @@ NL80211_TXQ_Q_BK = NL80211_AC_BK
  *	above the control channel
  */
 """
-NL80211_CHAN_TYPES = [None, 'HT20', 'HT40-', 'HT40+']
+NL80211_CHAN_TYPES = [None, "HT20", "HT40-", "HT40+"]
 NL80211_CHAN_NO_HT = 0
 NL80211_CHAN_HT20 = 1
 NL80211_CHAN_HT40MINUS = 2
@@ -2620,7 +2636,7 @@ NL80211_CHAN_HT40PLUS = 3
  * @NL80211_CHAN_WIDTH_10: 10 MHz OFDM channel
  */
 """
-NL80211_CHAN_WIDTHS = ['20-NOHT', '20', '40', '80', '80P80', '160', '5', '10']
+NL80211_CHAN_WIDTHS = ["20-NOHT", "20", "40", "80", "80P80", "160", "5", "10"]
 NL80211_CHAN_WIDTH_20_NOHT = 0
 NL80211_CHAN_WIDTH_20 = 1
 NL80211_CHAN_WIDTH_40 = 2
@@ -2640,7 +2656,7 @@ NL80211_CHAN_WIDTH_10 = 7
  * @NL80211_BSS_CHAN_WIDTH_5: control channel is 5 MHz wide
  */
 """
-NL80211_BSS_CHAN_WIDTHS = ['20', '10', '5']
+NL80211_BSS_CHAN_WIDTHS = ["20", "10", "5"]
 NL80211_BSS_CHAN_WIDTH_20 = 0
 NL80211_BSS_CHAN_WIDTH_10 = 1
 NL80211_BSS_CHAN_WIDTH_5 = 2
@@ -2711,7 +2727,7 @@ NL80211_BSS_MAX = NL80211_BSS_LAST_SEEN_BOOTTIME
  * indicates the status the interface has wrt. this BSS.
  */
 """
-NL80211_BSS_STATUSES = ['authenticated', 'associated', 'ibss']
+NL80211_BSS_STATUSES = ["authenticated", "associated", "ibss"]
 NL80211_BSS_STATUS_AUTHENTICATED = 0
 NL80211_BSS_STATUS_ASSOCIATED = 1
 NL80211_BSS_STATUS_IBSS_JOINED = 2
@@ -2737,7 +2753,7 @@ NL80211_AUTHTYPE_FT = 2
 NL80211_AUTHTYPE_NETWORK_EAP = 3
 NL80211_AUTHTYPE_SAE = 4
 NL80211_AUTHTYPE_MAX = NL80211_AUTHTYPE_SAE
-#NL80211_AUTHTYPE_AUTOMATIC   = 7 invalid in netlink
+# NL80211_AUTHTYPE_AUTOMATIC   = 7 invalid in netlink
 """
 /**
  * enum nl80211_key_type - Key Type
@@ -2846,9 +2862,9 @@ new in kernel v 4
  * @mcs: MCS bitmap table for each NSS (array index 0 for 1 stream, etc.)
  */
 """
-#struct nl80211_txrate_vht {
-#	__u16 mcs[NL80211_VHT_NSS_MAX];
-#};
+# struct nl80211_txrate_vht {
+# 	__u16 mcs[NL80211_VHT_NSS_MAX];
+# };
 
 # new in kernelv v 4
 NL80211_TXRATE_DEFAULT_GI = 0
@@ -2862,7 +2878,7 @@ NL80211_TXRATE_FORCE_LGI = 2
  * @NL80211_BAND_60GHZ: around 60 GHz band (58.32 - 64.80 GHz)
  */
 """
-NL80211_BANDS = ['2GHz', '5GHz', '60GHz']
+NL80211_BANDS = ["2GHz", "5GHz", "60GHz"]
 NL80211_BAND_2GHZ = 0
 NL80211_BAND_5GHZ = 1
 NL80211_BAND_60GHZ = 2
@@ -2938,7 +2954,7 @@ NL80211_CQM_RSSI_BEACON_LOSS_EVENT = 2
  * @NL80211_TX_POWER_FIXED: fix TX power to the mBm parameter
  */
 """
-NL80211_TX_POWER_SETTINGS = ['auto', 'limit', 'fixed']
+NL80211_TX_POWER_SETTINGS = ["auto", "limit", "fixed"]
 NL80211_TX_POWER_AUTOMATIC = 0
 NL80211_TX_POWER_LIMITED = 1
 NL80211_TX_POWER_FIXED = 2
@@ -2998,8 +3014,9 @@ def nl80211_pattern_support(max_patterns, min_len, max_len, max_offset):
      :param max_offset: maximum packet offset
      :returns: a packed nl80211_pattern_support
     """
-    return struct.pack(dot11_nl80211_pattern_support, max_patterns, min_len,
-                       max_len, max_offset)
+    return struct.pack(
+        dot11_nl80211_pattern_support, max_patterns, min_len, max_len, max_offset
+    )
 
 
 # backward compatibility
@@ -3123,9 +3140,9 @@ NL80211_WOWLAN_TRIG_MAX = NL80211_WOWLAN_TRIG_NET_DETECT_RESULTS
  * response packets might not go through correctly.
  */
 """
-#struct nl80211_wowlan_tcp_data_seq {
-#	__u32 start, offset, len;
-#};
+# struct nl80211_wowlan_tcp_data_seq {
+# 	__u32 start, offset, len;
+# };
 """
 /**
  * struct nl80211_wowlan_tcp_data_seq - WoWLAN TCP data sequence
@@ -3141,7 +3158,7 @@ struct nl80211_wowlan_tcp_data_seq {
 	__u32 start, offset, len;
 };
 """
-nl80211_wowlan_tcp_data_seq = 'III'
+nl80211_wowlan_tcp_data_seq = "III"
 NL80211WOWLANTCPDATASEQLEN = struct.calcsize(nl80211_wowlan_tcp_data_seq)
 
 
@@ -3169,10 +3186,10 @@ struct nl80211_wowlan_tcp_data_token {
 	__u8 token_stream[];
 };
 """
-#struct nl80211_wowlan_tcp_data_token {
-#	__u32 offset, len;
-#	__u8 token_stream[];
-#};
+# struct nl80211_wowlan_tcp_data_token {
+# 	__u32 offset, len;
+# 	__u8 token_stream[];
+# };
 """
 /**
  * struct nl80211_wowlan_tcp_data_token_feature - data token features
@@ -3184,9 +3201,10 @@ struct nl80211_wowlan_tcp_data_token_feature {
 	__u32 min_len, max_len, bufsize;
 };
 """
-nl80211_wowlan_tcp_data_token_feature = 'III'
+nl80211_wowlan_tcp_data_token_feature = "III"
 NL80211WOWLANTCPDATATOKENFEATURELEN = struct.calcsize(
-    nl80211_wowlan_tcp_data_token_feature)
+    nl80211_wowlan_tcp_data_token_feature
+)
 
 
 def nl80211_wowlan_tcp_data_token_feature(min_len, max_len, bufsize):
@@ -3197,8 +3215,7 @@ def nl80211_wowlan_tcp_data_token_feature(min_len, max_len, bufsize):
      :param bufsize: max size of token stream
      :returns: packed dot11_nl80211_wowlan_tcp_data_seq
     """
-    return struct.pack(nl80211_wowlan_tcp_data_token_feature, min_len, max_len,
-                       bufsize)
+    return struct.pack(nl80211_wowlan_tcp_data_token_feature, min_len, max_len, bufsize)
 
 
 """
@@ -3276,8 +3293,7 @@ def nl80211_coalesce_rule_support(max_rules, pat, max_delay):
      :param max_delay: max coalescing delay (msecs)
      :returns: a packed dot11_nl80211_coalesce_rule_support
     """
-    return struct.pack(nl80211_coalesce_rule_support, max_rules, pat,
-                       max_delay)
+    return struct.pack(nl80211_coalesce_rule_support, max_rules, pat, max_delay)
 
 
 """
@@ -3849,10 +3865,10 @@ new in kernel v 4
  * @subcmd: sub-command ID for the command
  */
 """
-#struct nl80211_vendor_cmd_info {
-#	__u32 vendor_id;
-#	__u32 subcmd;
-#};
+# struct nl80211_vendor_cmd_info {
+# 	__u32 vendor_id;
+# 	__u32 subcmd;
+# };
 """
 new in kernel v 4
 /**

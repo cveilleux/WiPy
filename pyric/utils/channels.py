@@ -25,14 +25,14 @@ Need to define 3GHz channels/freqs
 
 """
 
-__name__ = 'channels'
-__license__ = 'GPLv3'
-__version__ = '0.0.2'
-__date__ = 'August 2016'
-__author__ = 'Dale Patterson'
-__maintainer__ = 'Dale Patterson'
-__email__ = 'wraith.wireless@yandex.com'
-__status__ = 'Production'
+__name__ = "channels"
+__license__ = "GPLv3"
+__version__ = "0.0.2"
+__date__ = "August 2016"
+__author__ = "Dale Patterson"
+__maintainer__ = "Dale Patterson"
+__email__ = "wraith.wireless@yandex.com"
+__status__ = "Production"
 
 import pyric.net.wireless.nl80211_h as nl80211h
 
@@ -55,7 +55,7 @@ ISM_24_C2F = {
     11: 2462,
     12: 2467,
     13: 2472,
-    14: 2484
+    14: 2484,
 }
 ISM_24_F2C = {
     2432: 5,
@@ -71,7 +71,7 @@ ISM_24_F2C = {
     2422: 3,
     2457: 10,
     2427: 4,
-    2462: 11
+    2462: 11,
 }
 
 # UNII 5 Bands (ieee80211.h-> BAND_ID_5G)
@@ -122,7 +122,7 @@ UNII_5_C2F = {
     157: 5785,
     159: 5795,
     161: 5805,
-    165: 5825
+    165: 5825,
 }
 UNII_5_F2C = {
     5250: 50,
@@ -169,7 +169,7 @@ UNII_5_F2C = {
     5240: 48,
     5755: 151,
     5500: 100,
-    5630: 126
+    5630: 126,
 }
 
 # UNII 4 Bands (ieee80211.h-> BAND_ID_5G)
@@ -181,7 +181,7 @@ UNII_4_C2F = {
     188: 4940,
     189: 4945,
     192: 4960,
-    196: 4980
+    196: 4980,
 }
 UNII_4_F2C = {
     4960: 192,
@@ -191,13 +191,13 @@ UNII_4_F2C = {
     4915: 183,
     4980: 196,
     4920: 184,
-    4925: 185
+    4925: 185,
 }
 
 # US high powered backhaul (ieee80211.h-> BAND_ID_3G)
-#131 	3657.5 	 132 	36622.5 ? 132 	3660.0 133 	3667.5 133 	3665.0
-#134 	3672.5 	 134 	3670.0    135 	3677.5 136 	3682.5 136 	3680.0
-#137 	3687.5 	 137 	3685.0    138 	3689.5 138 	3690.0
+# 131 	3657.5 	 132 	36622.5 ? 132 	3660.0 133 	3667.5 133 	3665.0
+# 134 	3672.5 	 134 	3670.0    135 	3677.5 136 	3682.5 136 	3680.0
+# 137 	3687.5 	 137 	3685.0    138 	3689.5 138 	3690.0
 
 
 def channels(band=None):
@@ -207,18 +207,21 @@ def channels(band=None):
       'UNII4'=4GHz}
      :returns:list of channels
     """
-    if band == 'ISM': return ISM_24_C2F.keys()
-    elif band == 'UNII': return UNII_5_C2F.keys() + UNII_4_C2F.keys()
-    elif band == 'UNII4': return UNII_4_C2F.keys()
-    elif band == 'UNII5': return UNII_5_C2F.keys()
+    if band == "ISM":
+        return ISM_24_C2F.keys()
+    elif band == "UNII":
+        return UNII_5_C2F.keys() + UNII_4_C2F.keys()
+    elif band == "UNII4":
+        return UNII_4_C2F.keys()
+    elif band == "UNII5":
+        return UNII_5_C2F.keys()
     try:
-        return sorted(ISM_24_C2F.keys() + UNII_5_C2F.keys() +
-                      UNII_4_C2F.keys())
+        return sorted(ISM_24_C2F.keys() + UNII_5_C2F.keys() + UNII_4_C2F.keys())
     except TypeError:
         # python 3 doesn't like the above (uses dict_keys obj instead of list)
         return sorted(
-            list(ISM_24_C2F.keys()) + list(UNII_5_C2F.keys()) +
-            list(UNII_4_C2F.keys()))
+            list(ISM_24_C2F.keys()) + list(UNII_5_C2F.keys()) + list(UNII_4_C2F.keys())
+        )
 
 
 def freqs(band=None):
@@ -228,10 +231,14 @@ def freqs(band=None):
       'UNII4'=4GHz}
      :returns:list of frequencies
     """
-    if band == 'ISM': return sorted(ISM_24_F2C.keys())
-    elif band == 'UNII': return sorted(UNII_5_F2C.keys() + UNII_4_F2C.keys())
-    elif band == 'UNII4': return sorted(UNII_4_F2C.keys())
-    elif band == 'UNII5': return sorted(UNII_5_F2C.keys())
+    if band == "ISM":
+        return sorted(ISM_24_F2C.keys())
+    elif band == "UNII":
+        return sorted(UNII_5_F2C.keys() + UNII_4_F2C.keys())
+    elif band == "UNII4":
+        return sorted(UNII_4_F2C.keys())
+    elif band == "UNII5":
+        return sorted(UNII_5_F2C.keys())
     return sorted(ISM_24_F2C.keys() + UNII_5_F2C.keys() + UNII_4_F2C.keys())
 
 
@@ -241,9 +248,12 @@ def ch2rf(c):
      :param c:channel
      :returns:frequency in MHz corresponding to channel
     """
-    if c in ISM_24_C2F: return ISM_24_C2F[c]
-    if c in UNII_5_C2F: return UNII_5_C2F[c]
-    if c in UNII_4_C2F: return UNII_4_C2F[c]
+    if c in ISM_24_C2F:
+        return ISM_24_C2F[c]
+    if c in UNII_5_C2F:
+        return UNII_5_C2F[c]
+    if c in UNII_4_C2F:
+        return UNII_4_C2F[c]
     return None
 
 
@@ -253,7 +263,10 @@ def rf2ch(f):
      :param f:frequency (in MHz)
      :returns:channel number corresponding to frequency
     """
-    if f in ISM_24_F2C: return ISM_24_F2C[f]
-    if f in UNII_5_F2C: return UNII_5_F2C[f]
-    if f in UNII_4_F2C: return UNII_4_F2C[f]
+    if f in ISM_24_F2C:
+        return ISM_24_F2C[f]
+    if f in UNII_5_F2C:
+        return UNII_5_F2C[f]
+    if f in UNII_4_F2C:
+        return UNII_4_F2C[f]
     return None

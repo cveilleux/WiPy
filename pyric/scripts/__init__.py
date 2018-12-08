@@ -27,11 +27,11 @@ are permitted provided that the following conditions are met:
 
 """
 
-__name__ = 'scripts'
-__license__ = 'GPLv3'
-__version__ = '0.0.1'
-__date__ = 'January 2017'
-__author__ = 'Dale Patterson'
-__maintainer__ = 'Dale Patterson'
-__email__ = 'wraith.wireless@yandex.com'
-__status__ = 'Production'
+__name__ = "scripts"
+__license__ = "GPLv3"
+__version__ = "0.0.1"
+__date__ = "January 2017"
+__author__ = "Dale Patterson"
+__maintainer__ = "Dale Patterson"
+__email__ = "wraith.wireless@yandex.com"
+__status__ = "Production"

@@ -36,11 +36,11 @@ Linux header ports for netlink et al.
 
 """
 
-__name__ = 'net'
-__license__ = 'GPLv3'
-__version__ = '0.0.2'
-__date__ = 'April 2016'
-__author__ = 'Dale Patterson'
-__maintainer__ = 'Dale Patterson'
-__email__ = 'wraith.wireless@yandex.com'
-__status__ = 'Production'
+__name__ = "net"
+__license__ = "GPLv3"
+__version__ = "0.0.2"
+__date__ = "April 2016"
+__author__ = "Dale Patterson"
+__maintainer__ = "Dale Patterson"
+__email__ = "wraith.wireless@yandex.com"
+__status__ = "Production"

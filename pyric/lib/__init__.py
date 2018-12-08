@@ -42,11 +42,11 @@ lib subpackage
   o added support for NLA_SET
 """
 
-__name__ = 'lib'
-__license__ = 'GPLv3'
-__version__ = '0.0.2'
-__date__ = 'April 2016'
-__author__ = 'Dale Patterson'
-__maintainer__ = 'Dale Patterson'
-__email__ = 'wraith.wireless@yandex.com'
-__status__ = 'Production'
+__name__ = "lib"
+__license__ = "GPLv3"
+__version__ = "0.0.2"
+__date__ = "April 2016"
+__author__ = "Dale Patterson"
+__maintainer__ = "Dale Patterson"
+__email__ = "wraith.wireless@yandex.com"
+__status__ = "Production"
