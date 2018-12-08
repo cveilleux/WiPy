@@ -3,5 +3,5 @@ init:
 
 test:
 
-		pipenv run pytest tests/
-		pipenv run yapf -rdp wipy/
+		pipenv run pytest tests
+		pipenv run yapf -rdp pyric/
