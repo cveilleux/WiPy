@@ -102,11 +102,7 @@ TXPWRSETTINGS = nl80211h.NL80211_TX_POWER_SETTINGS
 
 
 def interfaces() -> List[str]:
-    """
-    Retrieves all network interfaces (APX ifconfig)
-
-    :returns: a list of device names of current network interfaces cards
-    """
+    """Return all network interfaces."""
     fin = None
     try:
         # read in devices from /proc/net/dev. After splitting on newlines, the
@@ -124,22 +120,12 @@ def interfaces() -> List[str]:
 
 
 def isinterface(dev: str) -> bool:
-    """
-    Determines if device name belongs to a network card (APX ifconfig <dev>)
-
-    :param dev: device name
-    :returns: {True if dev is a device|False otherwise}
-    """
+    """Return whether device is a network card."""
     return dev in interfaces()
 
 
-def winterfaces(iosock: socket.socket = None):
-    """
-    Retrieve all wireless interfaces (APX iwconfig)
-
-    :param iosock: ioctl socket
-    :returns: list of device names of current wireless NICs
-    """
+def winterfaces(iosock: Optional[socket.socket] = None) -> List[str]:
+    """Return all wireless interfaces."""
     if iosock is None:
         return _iostub_(winterfaces)
 
@@ -150,14 +136,8 @@ def winterfaces(iosock: socket.socket = None):
     return wifaces
 
 
-def iswireless(dev: str, iosock: socket.socket = None) -> bool:
-    """
-    Determines if given device is wireless (APX iwconfig <dev>)
-
-    :param dev: device name
-    :param iosock: ioctl socket
-    :returns: {True:device is wireless|False:device is not wireless/not present}
-    """
+def iswireless(dev: str, iosock: Optional[socket.socket] = None) -> bool:
+    """Return whether device is wireless or not."""
     if iosock is None:
         return _iostub_(iswireless, dev)
 
@@ -171,11 +151,10 @@ def iswireless(dev: str, iosock: socket.socket = None) -> bool:
         return False
 
 
-def phylist():
-    """
-    Use rfkill to return all phys of wireless devices
+def phylist() -> List[Tuple[int, str]]:
+    """Retrun all phys of wireless devices using rfkill.
 
-    :returns: a list of tuples t = (physical index, physical name)
+    :returns: a list of tuples t(physical index, physical name)
     """
     # these are stroed in /sys/class/ieee80211 but we let rfkill do it (just in
     # case the above path differs across distros or in future upgrades). However,
@@ -207,12 +186,10 @@ def phylist():
     return phys
 
 
-def regget(nlsock: nl.NLSocket = None):
-    """
-    Get the current regulatory domain (iw reg get)
+def regget(nlsock: Optional[nl.NLSocket] = None) -> str:
+    """Return the current regulatory domain.
 
-    :param nlsock: netlink socket
-    :returns: the two charactor regulatory domain
+    :returns: the two charactor regulatory domain.
     """
     if nlsock is None:
         return _nlstub_(regget)
@@ -230,9 +207,8 @@ def regget(nlsock: nl.NLSocket = None):
     return nl.nla_find(rmsg, nl80211h.NL80211_ATTR_REG_ALPHA2)
 
 
-def regset(rd, nlsock: nl.NLSocket = None):
-    """
-    Sets the current regulatory domain (iw reg set <rd>)
+def regset(rd: str, nlsock: Optional[nl.NLSocket] = None):
+    """Set the current regulatory domain.
 
     :param rd: regulatory domain code
     :param nlsock: netlink socket
@@ -262,8 +238,9 @@ def regset(rd, nlsock: nl.NLSocket = None):
 
 
 class Card(tuple):
-    """
-    A wireless network interface controller - Wrapper around a tuple
+    """A wireless network interface controller.
+    
+    It is a Wrapper around a tuple
     t = (physical index,device name, interface index)
     Exposes the following properties: (callable by '.'):
         phy: physical index
@@ -271,15 +248,14 @@ class Card(tuple):
         idx: interface index (ifindex)
     """
 
-    # noinspection PyInitNewSignature
-    def __new__(cls, p, d, i):
+    def __new__(cls, p: int, d: str, i: int):
         return super(Card, cls).__new__(cls, tuple((p, d, i)))
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return "Card(phy={0},dev={1},ifindex={2})".format(self.phy, self.dev, self.idx)
 
     @property
-    def phy(self):
+    def phy(self) -> int:
         return self[0]
 
     @property
@@ -287,31 +263,19 @@ class Card(tuple):
         return self[1]
 
     @property
-    def idx(self):
+    def idx(self) -> int:
         return self[2]
 
 
-def getcard(dev: str, nlsock: nl.NLSocket = None) -> Card:
-    """
-    Get the Card object from device name
-
-    :param dev: device name
-    :param nlsock: netlink socket
-    :returns: a Card with device name dev
-    """
+def getcard(dev: str, nlsock: Optional[nl.NLSocket] = None) -> Card:
+    """Return the Card object using device name."""
     if nlsock is None:
         return _nlstub_(getcard, dev)
     return devinfo(dev, nlsock)["card"]
 
 
-def validcard(card: Card, nlsock: nl.NLSocket = None) -> bool:
-    """
-    Determines if card is still valid i.e. another program has not changed it
-
-    :param card: Card object
-    :param nlsock: netlink socket
-    :returns: True if card is still valid, False otherwise
-    """
+def validcard(card: Card, nlsock: Optional[nl.NLSocket] = None) -> bool:
+    """Return the card validity."""
     if nlsock is None:
         return _nlstub_(validcard, card)
 
@@ -329,14 +293,8 @@ def validcard(card: Card, nlsock: nl.NLSocket = None) -> bool:
 ################################################################################
 
 
-def macget(card: Card, iosock: socket.socket = None) -> str:
-    """
-    Gets the interface's hw address (APX ifconfig <card.dev> | grep HWaddr)
-
-    :param card: Card object
-    :param iosock: ioctl socket
-    :returns: device mac after operation
-    """
+def macget(card: Card, iosock: Optional[socket.socket] = None) -> str:
+    """Return the interface's hw address."""
     if iosock is None:
         return _iostub_(macget, card)
 
@@ -356,14 +314,9 @@ def macget(card: Card, iosock: socket.socket = None) -> str:
         raise pyric.error(e.errno, e.strerror)
 
 
-def macset(card: Card, mac: str, iosock: socket.socket = None) -> bool:
-    """
-    Set nic's hwaddr (ifconfig <card.dev> hw ether <mac>)
+def macset(card: Card, mac: str, iosock: Optional[socket.socket] = None) -> bool:
+    """Set nic's hwaddr.
 
-    :param card: Card object
-    :param mac: macaddr to set
-    :param iosock: ioctl socket
-    :returns True on success, False otherwise
     .. warning:: Requires root privileges
     """
     if not _validmac_(mac):
@@ -387,12 +340,11 @@ def macset(card: Card, mac: str, iosock: socket.socket = None) -> bool:
         raise pyric.error(e.errno, e.strerror)
 
 
-def ifaddrget(card: Card, iosock: socket.socket = None):
-    """
-    Get nic's ip, netmask and broadcast addresses
+def ifaddrget(
+    card: Card, iosock: Optional[socket.socket] = None
+) -> Tuple[Any, Any, Any]:
+    """Return nic's ip, netmask and broadcast addresses
 
-    :param card: Card object
-    :param iosock: ioctl socket
     :returns: the tuple t = (inet,mask,bcast)
     """
     if iosock is None:
@@ -440,20 +392,17 @@ def ifaddrget(card: Card, iosock: socket.socket = None):
 
 
 def ifaddrset(
-    card: Card, inet=None, mask=None, bcast=None, iosock: socket.socket = None
+    card: Card,
+    inet: Optional[str] = None,
+    mask: Optional[str] = None,
+    bcast: Optional[str] = None,
+    iosock: Optional[socket.socket] = None,
 ) -> bool:
-    """
-    Set nic's ip4 addr, netmask and/or broadcast
-     (ifconfig <card.dev> <inet> netmask <mask> broadcast <bcast>)
-     can set ipaddr,netmask and/or broadcast to None but one or more of ipaddr,
-     netmask, broadcast must be set
+    """Set nic's ip4 addr, netmask and/or broadcast.
 
-    :param card: Card object
-    :param inet: ip address to set
-    :param mask: netmask to set
-    :param bcast: broadcast to set
-    :param iosock: ioctl socket
-    :returns: True on success, False otherwise
+    It can set ipaddr,netmask and/or broadcast to None but one or more of ipaddr,
+    netmask, broadcast must be set
+
     .. note:
         1) throws error if setting netmask or broadcast and card does not have
             an ip assigned
@@ -499,14 +448,9 @@ def ifaddrset(
         raise pyric.error(pyric.EUNDEF, "Error parsing results: {0}".format(e))
 
 
-def inetset(card: Card, inet, iosock: socket.socket = None) -> bool:
-    """
-    Set nic's ip4 addr  (ifconfig <card.dev> <inet>
+def inetset(card: Card, inet, iosock: Optional[socket.socket] = None) -> bool:
+    """Set nic's ip4 addrress.
 
-    :param card: Card object
-    :param inet: ip address to set
-    :param iosock: ioctl socket
-    :returns: True on success, False otherwise
     .. note: setting the ip will set netmask and broadcast accordingly
     .. warning:: Requires root privileges
     """
@@ -531,14 +475,9 @@ def inetset(card: Card, inet, iosock: socket.socket = None) -> bool:
         raise pyric.error(e.errno, e.strerror)
 
 
-def maskset(card: Card, mask: str, iosock: socket.socket = None) -> bool:
-    """
-    Set nic's ip4 netmask (ifconfig <card.dev> netmask <netmask>
+def maskset(card: Card, mask: str, iosock: Optional[socket.socket] = None) -> bool:
+    """Set nic's ip4 netmask.
 
-    :param card: Card object
-    :param mask: netmask to set
-    :param iosock: ioctl socket
-    :returns: True on success, False otherwise
     .. note:
         throws error if netmask is set and card does not have an ip assigned
     .. warning:: Requires root privileges
@@ -568,14 +507,9 @@ def maskset(card: Card, mask: str, iosock: socket.socket = None) -> bool:
             raise pyric.error(e, e.strerror)
 
 
-def bcastset(card: Card, bcast, iosock: socket.socket = None) -> bool:
-    """
-    Set nic's ip4 netmask (ifconfig <card.dev> broadcast <broadcast>
+def bcastset(card: Card, bcast: str, iosock: Optional[socket.socket] = None) -> bool:
+    """Set nic's ip4 netmask.
 
-    :param card: Card object
-    :param bcast: netmask to set
-    :param iosock: ioctl socket
-    :returns: True on success, False otherwise
     .. note:
         1) throws error if netmask is set and card does not have an ip assigned
         2) can set broadcast to erroneous values i.e. ipaddr = 192.168.1.2 and
@@ -621,13 +555,8 @@ def bcastset(card: Card, bcast, iosock: socket.socket = None) -> bool:
 ################################################################################
 
 
-def isup(card: Card, iosock: socket.socket = None) -> bool:
-    """
-    Determine on/off state of card
-    :param card: Card object
-    :param iosock: ioctl socket
-    :returns: True if card is up, False otherwise
-    """
+def isup(card: Card, iosock: Optional[socket.socket] = None) -> bool:
+    """Return whether the card is up or not."""
     if iosock is None:
         return _iostub_(isup, card)
 
@@ -637,12 +566,9 @@ def isup(card: Card, iosock: socket.socket = None) -> bool:
         raise pyric.error(pyric.EINVAL, "Invalid Card")
 
 
-def up(card: Card, iosock: socket.socket = None) -> None:
-    """
-    Turns dev on (ifconfig <card.dev> up)
+def up(card: Card, iosock: Optional[socket.socket] = None) -> None:
+    """Turn device on.
 
-    :param card: Card object
-    :param iosock: ioctl socket
     .. warning:: Requires root privileges
     """
     if iosock is None:
@@ -656,12 +582,9 @@ def up(card: Card, iosock: socket.socket = None) -> None:
         raise pyric.error(pyric.EINVAL, "Invalid Card")
 
 
-def down(card: Card, iosock: socket.socket = None) -> None:
-    """
-    Turns def off (ifconfig <card.dev> down)
+def down(card: Card, iosock: Optional[socket.socket] = None) -> None:
+    """Turn device off.
 
-    :param card: Card object
-    :param iosock: ioctl socket
     .. warning:: Requires root privileges
     """
     if iosock is None:
@@ -676,10 +599,8 @@ def down(card: Card, iosock: socket.socket = None) -> None:
 
 
 def isblocked(card: Card) -> Tuple[bool, bool]:
-    """
-    Determines blocked state of Card
+    """Return whether the device is blocked or not.
 
-    :param card: Card object
     :returns: tuple (Soft={True if soft blocked|False otherwise},
                      Hard={True if hard blocked|False otherwise})
     """
@@ -691,11 +612,7 @@ def isblocked(card: Card) -> Tuple[bool, bool]:
 
 
 def block(card: Card) -> None:
-    """
-    Soft blocks card
-
-    :param card: Card object
-    """
+    """Soft block the card."""
     try:
         idx = rfkill.getidx(card.phy)
         rfkill.rfkill_block(idx)
@@ -704,11 +621,7 @@ def block(card: Card) -> None:
 
 
 def unblock(card: Card) -> None:
-    """
-    Turns off soft block
-
-    :param card:
-    """
+    """Turn off soft block."""
     try:
         idx = rfkill.getidx(card.phy)
         rfkill.rfkill_unblock(idx)
@@ -721,14 +634,8 @@ def unblock(card: Card) -> None:
 ################################################################################
 
 
-def pwrsaveget(card: Card, nlsock: nl.NLSocket = None):
-    """
-    Returns card's power save state
-
-    :param card: Card object
-    :param nlsock: netlink socket
-    :returns: True if power save is on, False otherwise
-    """
+def pwrsaveget(card: Card, nlsock: Optional[nl.NLSocket] = None) -> bool:
+    """Return whether card's power save state is on or not."""
     if nlsock is None:
         return _nlstub_(pwrsaveget, card)
 
@@ -749,13 +656,9 @@ def pwrsaveget(card: Card, nlsock: nl.NLSocket = None):
     return nl.nla_find(rmsg, nl80211h.NL80211_ATTR_PS_STATE) == 1
 
 
-def pwrsaveset(card: Card, on: bool, nlsock: nl.NLSocket = None):
-    """
-    Sets card's power save state
+def pwrsaveset(card: Card, on: bool, nlsock: Optional[nl.NLSocket] = None):
+    """Set card's power save state.
 
-    :param card: Card object
-    :param on: {True = on|False = off}
-    :param nlsock: netlink socket
     .. warning:: Requires root privileges
     """
     if nlsock is None:
@@ -779,28 +682,21 @@ def pwrsaveset(card: Card, on: bool, nlsock: nl.NLSocket = None):
         raise pyric.error(e.errno, e.strerror)
 
 
-def covclassget(card: Card, nlsock: nl.NLSocket = None):
-    """
-    Gets the coverage class value
-
-    :param card: Card object
-    :param nlsock: netlink socket
-    :returns: coverage class value
-    """
+def covclassget(card: Card, nlsock: Optional[nl.NLSocket] = None):
+    """Return the card's coverage class value."""
     if nlsock is None:
         return _nlstub_(covclassget, card)
     return phyinfo(card, nlsock)["cov_class"]
 
 
-def covclassset(card: Card, cc, nlsock: nl.NLSocket = None):
-    """
-    Sets the coverage class. The coverage class IAW IEEE Std 802.11-2012 is
+def covclassset(card: Card, cc: int, nlsock: Optional[nl.NLSocket] = None) -> None:
+    """Set the card's coverage class.
+
+    The coverage class IAW IEEE Std 802.11-2012 is
     defined as the Air propagation time & together with max tx power control
     the BSS diamter
 
-    :param card: Card object
     :param cc: coverage class 0 to 31 IAW IEEE Std 802.11-2012 Table 8-56
-    :param nlsock: netlink socket
     .. warning:: Requires root privileges. Also this might not work on all
         systems.
     """
@@ -832,24 +728,17 @@ def covclassset(card: Card, cc, nlsock: nl.NLSocket = None):
         raise pyric.error(e.errno, e.strerror)
 
 
-def retryshortget(card: Card, nlsock: nl.NLSocket = None):
-    """
-    Gets the short retry limit.
-
-    :param card: Card object
-    :param nlsock: netlink socket
-    """
+def retryshortget(card: Card, nlsock: Optional[nl.NLSocket] = None):
+    """Return the card's short retry limit."""
     if nlsock is None:
         return _nlstub_(retryshortget, card)
     return phyinfo(card, nlsock)["retry_short"]
 
 
-def retryshortset(card: Card, lim: int, nlsock: nl.NLSocket = None):
-    """
-    Sets the short retry limit.
-    :param card: Card object
+def retryshortset(card: Card, lim: int, nlsock: Optional[nl.NLSocket] = None):
+    """Sets the short retry limit.
+
     :param lim: max # of short retries 1 - 255
-    :param nlsock: netlink socket
     .. note: with kernel 4, the kernel does not allow setting up to the max
     .. warning:: Requires root privileges
     """
@@ -881,25 +770,17 @@ def retryshortset(card: Card, lim: int, nlsock: nl.NLSocket = None):
         raise pyric.error(e.errno, e.strerror)
 
 
-def retrylongget(card: Card, nlsock: nl.NLSocket = None):
-    """
-    Gets the long retry limit.
-
-    :param card: Card object
-    :param nlsock: netlink socket
-    :returns: card's long retry
-    """
+def retrylongget(card: Card, nlsock: Optional[nl.NLSocket] = None):
+    """Return the card's long retry limit."""
     if nlsock is None:
         return _nlstub_(retrylongget, card)
     return phyinfo(card, nlsock)["retry_long"]
 
 
-def retrylongset(card: Card, lim: int, nlsock: nl.NLSocket = None):
-    """
-    Sets the long retry limit.
-    :param card: Card object
+def retrylongset(card: Card, lim: int, nlsock: Optional[nl.NLSocket] = None):
+    """Set the card's long retry limit.
+    
     :param lim: max # of short retries 1 - 255
-    :param nlsock: netlink socket
     .. note: after moving to kernel 4, the kernel does not allow setting up to
         the max
     .. warning:: Requires root privileges
@@ -932,12 +813,9 @@ def retrylongset(card: Card, lim: int, nlsock: nl.NLSocket = None):
         raise pyric.error(e.errno, e.strerror)
 
 
-def rtsthreshget(card: Card, nlsock: nl.NLSocket = None):
-    """
-    Gets RTS Threshold
+def rtsthreshget(card: Card, nlsock: Optional[nl.NLSocket] = None):
+    """Return the card's RTS Threshold.
 
-    :param card: Card Object
-    :param nlsock: netlink socket
     :returns: RTS threshold
     """
     if nlsock is None:
@@ -945,14 +823,12 @@ def rtsthreshget(card: Card, nlsock: nl.NLSocket = None):
     return phyinfo(card, nlsock)["rts_thresh"]
 
 
-def rtsthreshset(card: Card, thresh, nlsock: nl.NLSocket = None):
-    """
-    Sets the RTS threshold. If off, RTS is disabled. If an integer, sets the
+def rtsthreshset(card: Card, thresh: int, nlsock: Optional[nl.NLSocket] = None):
+    """Set the card's RTS threshold.
+
+    If off, RTS is disabled. If an integer, sets the
     smallest packet for which card will send an RTS prior to each transmission
 
-    :param card: Card object
-    :param thresh: rts threshold limit
-    :param nlsock: netlink socket
     .. warning:: Requires root privileges
     """
     if thresh == "off":
@@ -985,12 +861,9 @@ def rtsthreshset(card: Card, thresh, nlsock: nl.NLSocket = None):
         raise pyric.error(e.errno, e.strerror)
 
 
-def fragthreshget(card: Card, nlsock: nl.NLSocket = None):
-    """
-    Gets Fragmentation Threshold
+def fragthreshget(card: Card, nlsock: Optional[nl.NLSocket] = None):
+    """Return the card's Fragmentation Threshold.
 
-    :param card: Card Object
-    :param nlsock: netlink socket
     :returns: RTS threshold
     """
     if nlsock is None:
@@ -998,14 +871,13 @@ def fragthreshget(card: Card, nlsock: nl.NLSocket = None):
     return phyinfo(card, nlsock)["frag_thresh"]
 
 
-def fragthreshset(card: Card, thresh, nlsock: nl.NLSocket = None):
-    """
-    Sets the Frag threshold. If off, fragmentation is disabled. If an integer,
+def fragthreshset(card: Card, thresh, nlsock: Optional[nl.NLSocket] = None):
+    """Set the card's Fragmentation threshold.
+    
+    If off, fragmentation is disabled. If an integer,
     sets the largest packet before the card will enable fragmentation
 
-    :param card: Card object
     :param thresh: frag threshold limit in octets
-    :param nlsock: netlink socket
     .. warning:: Requires root privileges
     """
     if thresh == "off":
@@ -1041,12 +913,9 @@ def fragthreshset(card: Card, thresh, nlsock: nl.NLSocket = None):
 ################################################################################
 
 
-def devfreqs(card: Card, nlsock: nl.NLSocket = None):
-    """
-    Returns card's supported frequencies
+def devfreqs(card: Card, nlsock: Optional[nl.NLSocket] = None) -> List[str]:
+    """Return card's supported frequencies.
 
-    :param card: Card object
-    :param nlsock: netlink socket
     :returns: list of supported frequencies
     """
     if nlsock is None:
@@ -1060,12 +929,9 @@ def devfreqs(card: Card, nlsock: nl.NLSocket = None):
     return rfs
 
 
-def devchs(card: Card, nlsock: nl.NLSocket = None):
-    """
-    Returns card's supported channels
+def devchs(card: Card, nlsock: Optional[nl.NLSocket] = None) -> List:
+    """Return the card's supported channels.
 
-    :param card: Card object
-    :param nlsock: netlink socket
     :returns: list of supported channels
     """
     if nlsock is None:
@@ -1073,12 +939,9 @@ def devchs(card: Card, nlsock: nl.NLSocket = None):
     return [channels.rf2ch(rf) for rf in devfreqs(card, nlsock)]
 
 
-def devstds(card: Card, nlsock: nl.NLSocket = None):
-    """
-    Gets card's wireless standards (iwconfig <card.dev> | grep IEEE
+def devstds(card: Card, nlsock: Optional[nl.NLSocket] = None) -> List[str]:
+    """Return the card's wireless standards.
 
-    :param card: Card object
-    :param nlsock: netlink socket
     :returns: list of standards (letter designators)
     """
     if nlsock is None:
@@ -1101,12 +964,9 @@ def devstds(card: Card, nlsock: nl.NLSocket = None):
     return stds
 
 
-def devmodes(card: Card, nlsock: nl.NLSocket = None):
-    """
-    Gets supported modes card can operate in
+def devmodes(card: Card, nlsock: Optional[nl.NLSocket] = None) -> List:
+    """Return the card's supported modes.
 
-    :param card: Card object
-    :param nlsock: netlink socket
     :returns: list of card's supported modes
     """
     if nlsock is None:
@@ -1114,12 +974,9 @@ def devmodes(card: Card, nlsock: nl.NLSocket = None):
     return phyinfo(card, nlsock)["modes"]
 
 
-def devcmds(card: Card, nlsock: nl.NLSocket = None):
-    """
-    Get supported commands card can execute
+def devcmds(card: Card, nlsock: Optional[nl.NLSocket] = None):
+    """Return the card's supported commands.
 
-    :param card: Card object
-    :param nlsock: netlink socket
     :returns: supported commands
     """
     if nlsock is None:
@@ -1127,12 +984,9 @@ def devcmds(card: Card, nlsock: nl.NLSocket = None):
     return phyinfo(card, nlsock)["commands"]
 
 
-def ifinfo(card: Card, iosock: socket.socket = None) -> Dict[str, Any]:
-    """
-    Get info for interface (ifconfig <dev>)
+def ifinfo(card: Card, iosock: Optional[socket.socket] = None) -> Dict[str, Any]:
+    """Return info for interface.
 
-    :param card: Card object
-    :param iosock: ioctl socket
     :returns: dict with the following key:value pairs
         driver -> card's driver
         chipset -> card's chipset
@@ -1172,11 +1026,8 @@ def ifinfo(card: Card, iosock: socket.socket = None) -> Dict[str, Any]:
 
 
 def devinfo(card: Union[Card, str], nlsock: Optional[nl.NLSocket] = None):
-    """
-    Get info for device (iw dev <dev> info)
+    """Return info for device.
 
-    :param card: Card object or dev
-    :param nlsock: netlink socket
     :returns: dict with the following key:value pairs
         card -> Card(phy,dev,ifindex)
         mode -> i.e. monitor or managed
@@ -1243,11 +1094,8 @@ def devinfo(card: Union[Card, str], nlsock: Optional[nl.NLSocket] = None):
 
 
 def phyinfo(card: Card, nlsock: Optional[nl.NLSocket] = None) -> Dict[str, Any]:
-    """
-    Get info for phy (iw phy <phy> info)
+    """Return info for phy.
 
-    :param card: Card
-    :param nlsock: netlink socket
     :returns: dict with the following key:value pairs
         generation -> wiphy generation
         modes -> list of supported modes
@@ -1340,16 +1188,12 @@ def phyinfo(card: Card, nlsock: Optional[nl.NLSocket] = None) -> Dict[str, Any]:
 ################################################################################
 
 
-def txset(card: Card, setting, lvl, nlsock: nl.NLSocket = None):
-    """
-    Sets cards tx power (iw phy card.<phy> <lvl> <pwr> * 100)
+def txset(card: Card, setting, lvl: str, nlsock: Optional[nl.NLSocket] = None) -> bool:
+    """Set the card's tx power.
 
-    :param card: Card object
     :param setting: power level setting oneof {'auto' = automatically determine
         transmit power|'limit' = limit power by <pwr>|'fixed' = set to <pwr>}
     :param lvl: desired tx power in dBm or None. NOTE: ignored if lvl is 'auto'
-    :param nlsock: netlink socket
-    :returns: True on success
     .. note: this does not work on my card(s) (nor does the corresponding iw
         command)
     .. warning:: Requires root privileges
@@ -1386,12 +1230,9 @@ def txset(card: Card, setting, lvl, nlsock: nl.NLSocket = None):
         raise pyric.error(e.errno, e.strerror)
 
 
-def txget(card: Card, iosock: socket.socket = None):
-    """
-    Gets card's transmission power (iwconfig <card.dev> | grep Tx-Power)
+def txget(card: Card, iosock: Optional[socket.socket] = None):
+    """Return the card's transmission power.
 
-    :param card: Card object
-    :param iosock: ioctl socket
     :returns: transmission power in dBm
     .. note: info can be found by cat /sys/kernel/debug/ieee80211/phy<#>/power but
         how valid is it?
@@ -1413,12 +1254,9 @@ def txget(card: Card, iosock: socket.socket = None):
         raise pyric.error(e.errno, e.strerror)
 
 
-def chget(card: Card, nlsock: nl.NLSocket = None):
-    """
-    Gets the current channel for device (iw dev <card.dev> info | grep channel)
+def chget(card: Card, nlsock: Optional[nl.NLSocket] = None):
+    """Return the current channel for device.
 
-    :param card: Card object
-    :param nlsock: netlink socket
     .. note: will only work if dev is associated w/ AP or device is in monitor mode
         and has had chset previously
     """
@@ -1427,14 +1265,13 @@ def chget(card: Card, nlsock: nl.NLSocket = None):
     return channels.rf2ch(devinfo(card, nlsock)["RF"])
 
 
-def chset(card: Card, ch, chw=None, nlsock: nl.NLSocket = None):
-    """
-    Sets current channel on device (iw phy <card.phy> set channel <ch> <chw>)
+def chset(
+    card: Card, ch: int, chw: Optional[str] = None, nlsock: Optional[nl.NLSocket] = None
+):
+    """Set the current channel for device.
 
-    :param card: Card object
     :param ch: channel number
-    :param chw: channel width oneof {[None|'HT20'|'HT40-'|'HT40+'}
-    :param nlsock: netlink socket
+    :param chw: channel width oneof {None|'HT20'|'HT40-'|'HT40+'}
     .. note:
       Can throw a device busy for several reason. 1) Card is down, 2) Another
       device is sharing the phy and wpa_supplicant/Network Manage is using it
@@ -1445,28 +1282,24 @@ def chset(card: Card, ch, chw=None, nlsock: nl.NLSocket = None):
     return freqset(card, channels.ch2rf(ch), chw, nlsock)
 
 
-def freqget(card: Card, nlsock: nl.NLSocket = None):
-    """
-    Gets the current frequency for device (iw dev <card.dev> info | grep channel)
+def freqget(card: Card, nlsock: Optional[nl.NLSocket] = None):
+    """Return the current frequency for device.
 
-    :param card: Card object
-    :param nlsock: netlink socket
     .. note: will only work if dev is associated w/ AP or device is in monitor mode
-        and has had [ch|freq]set previously
+        and has had [ch|freq] set previously
     """
     if nlsock is None:
         return _nlstub_(chget, card)
     return devinfo(card, nlsock)["RF"]
 
 
-def freqset(card: Card, rf, chw: str = None, nlsock: nl.NLSocket = None):
-    """
-    Set the frequency and width
+def freqset(
+    card: Card, rf, chw: Optional[str] = None, nlsock: Optional[nl.NLSocket] = None
+):
+    """Set the card's frequency and width
 
-    :param card: Card object
     :param rf: frequency
     :param chw: channel width oneof {[None|'HT20'|'HT40-'|'HT40+'}
-    :param nlsock: netlink socket
     .. note:
         Can throw a device busy for several reason. 1) Card is down, 2) Another
         device is sharing the phy and wpa_supplicant/Network Manage is using it
@@ -1500,31 +1333,25 @@ def freqset(card: Card, rf, chw: str = None, nlsock: nl.NLSocket = None):
 #### INTERFACE & MODE RELATED ####
 
 
-def modeget(card: Card, nlsock: nl.NLSocket = None):
-    """
-    Get current mode of card
-
-    :param card: Card object
-    :param nlsock: netlink socket
-    :return:
-    """
+def modeget(card: Card, nlsock: Optional[nl.NLSocket] = None) -> str:
+    """Return the card's current mode."""
     if nlsock is None:
         return _nlstub_(modeget, card)
     return devinfo(card, nlsock)["mode"]
 
 
-def modeset(card: Card, mode, flags=None, nlsock: nl.NLSocket = None):
-    """
-    Sets card to mode (with optional flags if mode is monitor)
+def modeset(
+    card: Card, mode: Optional[str], flags=None, nlsock: Optional[nl.NLSocket] = None
+):
+    """Set the card's mode.
+
     (APX iw dev <card.dev> set type <mode> [flags])
 
-    :param card: Card object
     :param mode: 'name' of mode to operate in (must be one of in {'unspecified'|
         'ibss'|'managed'|'AP'|'AP VLAN'|'wds'|'monitor'|'mesh'|'p2p'}
     :param flags: list of monitor flags (can only be used if card is being set
         to monitor mode) neof {'invalid'|'fcsfail'|'plcpfail'|'control'|'other bss'
                              |'cook'|'active'}
-    :param nlsock: netlink socket
     .. note: as far
     """
     if mode not in IFTYPES:
@@ -1558,13 +1385,12 @@ def modeset(card: Card, mode, flags=None, nlsock: nl.NLSocket = None):
         raise pyric.error(e.errno, e.strerror)
 
 
-def ifaces(card: Card, nlsock: nl.NLSocket = None) -> List[Tuple[Card, str]]:
-    """
-    Returns all interfaces sharing the same phy as card (APX iw dev | grep phy#)
+def ifaces(card: Card, nlsock: Optional[nl.NLSocket] = None) -> List[Tuple[Card, str]]:
+    """Return all interfaces sharing the same phy as card.
+    
+    (APX iw dev | grep phy#)
 
-    :param card: Card object
-    :param nlsock: netlink socket
-    :returns: a list of tuples t = (Card,mode) for each device having the same
+    :returns: a list of tuples t = (Card, mode) for each device having the same
         phyiscal index as that of card
     """
     if nlsock is None:
@@ -1583,12 +1409,11 @@ def ifaces(card: Card, nlsock: nl.NLSocket = None) -> List[Tuple[Card, str]]:
     return ifs
 
 
-def devset(card: Card, ndev, nlsock: nl.NLSocket = None) -> Card:
-    """
-    Change card's dev to ndev
-    :param card: Card object
+def devset(card: Card, ndev, nlsock: Optional[nl.NLSocket] = None) -> Card:
+    """Change the card's device name.
+
+
     :param ndev: new dev name
-    :param nlsock: netlink socket
     :returns: the new card object
     .. note:
         - via netlink one can set a new physical name but we want the ability to
@@ -1597,7 +1422,7 @@ def devset(card: Card, ndev, nlsock: nl.NLSocket = None) -> Card:
             deletes the current card, returning the new card
         - in effect, it will appear as if the card has a new name but, it will also
             have a new ifindex
-    .. warning:: Requires root privileges
+    .. warning: Requires root privileges
     """
     if nlsock is None:
         return _nlstub_(devset, card, ndev)
@@ -1624,21 +1449,21 @@ def devset(card: Card, ndev, nlsock: nl.NLSocket = None) -> Card:
     return new
 
 
-def devadd(card: Card, vdev, mode, flags=None, nlsock: nl.NLSocket = None) -> Card:
-    """
-    Adds a virtual interface on device having type mode (iw dev <card.dev>
-        interface add <vnic> type <mode>
-    :param card: Card object or ifindex
+def devadd(
+    card: Card, vdev: str, mode: str, flags=None, nlsock: Optional[nl.NLSocket] = None
+) -> Card:
+    """Add a virtual interface on device having type mode.
+    
+    iw dev <card.dev> interface add <vnic> type <mode>
+    
     :param vdev: device name of new interface
     :param mode: 'name' of mode to operate in (must be one of in {'unspecified'|
         'ibss'|'managed'|'AP'|'AP VLAN'|'wds'|'monitor'|'mesh'|'p2p'}
     :param flags: list of monitor flags (can only be used if creating monitor
         mode) oneof {'invalid'|'fcsfail'|'plcpfail'|'control'|'other bss'
                     |'cook'|'active'}
-    :param nlsock: netlink socket
-    :returns: the new Card
     .. note: the new Card will be 'down'
-    .. warning:: Requires root privileges
+    .. warning: Requires root privileges
     """
     if iswireless(vdev):
         raise pyric.error(pyric.ENOTUNIQ, "{0} already exists".format(vdev))
@@ -1687,14 +1512,12 @@ def devadd(card: Card, vdev, mode, flags=None, nlsock: nl.NLSocket = None) -> Ca
     )
 
 
-def devdel(card: Card, nlsock: nl.NLSocket = None) -> None:
-    """
-     REQUIRES ROOT PRIVILEGES
-     deletes the device (dev <card.dev> del
-     :param card: Card object
-     :param nlsock: netlink socket
-     NOTE: the original card is no longer valid (i.e. the phy will still be present
+def devdel(card: Card, nlsock: Optional[nl.NLSocket] = None) -> None:
+    """delete the device.
+
+    .. note: the original card is no longer valid (i.e. the phy will still be present
      but the device name and ifindex are no longer 'present' in the system
+    .. warning: Requires root privileges.
     """
     if nlsock is None:
         return _nlstub_(devdel, card)
@@ -1714,21 +1537,21 @@ def devdel(card: Card, nlsock: nl.NLSocket = None) -> None:
         raise pyric.error(e.errno, e.strerror)
 
 
-def phyadd(card: Card, vdev, mode, flags=None, nlsock: nl.NLSocket = None) -> Card:
-    """
-     REQUIRES ROOT PRIVILEGES
-     adds a virtual interface on device having type mode (iw phy <card.phy>
-      interface add <vnic> type <mode>
-     :param card: Card object or physical index
-     :param vdev: device name of new interface
-     :param mode: 'name' of mode to operate in (must be one of in {'unspecified'|
-     'ibss'|'managed'|'AP'|'AP VLAN'|'wds'|'monitor'|'mesh'|'p2p'}
-     :param flags: list of monitor flags (can only be used if creating monitor
-     mode) oneof {'invalid'|'fcsfail'|'plcpfail'|'control'|'other bss'
-                  |'cook'|'active'}
-     :param nlsock: netlink socket
-     :returns: the new Card
-     NOTE: the new Card will be 'down'
+def phyadd(
+    card: Card, vdev: str, mode: str, flags=None, nlsock: Optional[nl.NLSocket] = None
+) -> Card:
+    """Add a virtual interface on device having type mode.
+    
+    iw phy <card.phy> interface add <vnic> type <mode>
+    
+    :param vdev: device name of new interface
+    :param mode: 'name' of mode to operate in (must be one of in {'unspecified'|
+    'ibss'|'managed'|'AP'|'AP VLAN'|'wds'|'monitor'|'mesh'|'p2p'}
+    :param flags: list of monitor flags (can only be used if creating monitor
+    mode) oneof {'invalid'|'fcsfail'|'plcpfail'|'control'|'other bss'
+                 |'cook'|'active'}
+    .. note: the new Card will be 'down'
+    .. warning: Requires root privileges.
     """
     if mode not in IFTYPES:
         raise pyric.error(pyric.EINVAL, "Invalid mode")
@@ -1780,29 +1603,28 @@ def phyadd(card: Card, vdev, mode, flags=None, nlsock: nl.NLSocket = None) -> Ca
 ################################################################################
 
 
-def isconnected(card: Card, nlsock: nl.NLSocket = None) -> bool:
-    """
-     disconnect the card from an AP
-     :param card: Card object
-     :param nlsock: netlink socket
-    """
+def isconnected(card: Card, nlsock: Optional[nl.NLSocket] = None) -> bool:
+    """Return whether card is connected to an access point."""
     if nlsock is None:
         return _nlstub_(isconnected, card)
     return devinfo(card, nlsock)["RF"] is not None
 
 
-def connect(card: Card, ssid, bssid=None, rf=None, nlsock: nl.NLSocket = None) -> bool:
-    """
-     REQUIRES ROOT PRIVILEGES & WPA_SUPPLICANT MUST BE DISABLED
-     connects to (Open) AP
-     :param card: Card object
+def connect(
+    card: Card,
+    ssid: str,
+    bssid: Optional[str] = None,
+    rf=None,
+    nlsock: Optional[nl.NLSocket] = None,
+) -> bool:
+    """Connect card to an open access point.
+
      :param ssid: the SSID, network name
      :param bssid: the AP's BSSID
      :param rf:  the frequency of the AP
-     :param nlsock: netlink socket
-     :returns: True on successful connect, False otherwise
-     NOTE: although connected, traffic will not be routed, card will not have
+    .. note: Although connected, traffic will not be routed, card will not have
       an IP assigned
+    .. warning: Requires root privileges and WPA_SUPPLICANT must be disabled.
     """
     if nlsock is None:
         return _nlstub_(connect, card, ssid, bssid, rf)
@@ -1826,14 +1648,12 @@ def connect(card: Card, ssid, bssid=None, rf=None, nlsock: nl.NLSocket = None) -
     return True
 
 
-def disconnect(card: Card, nlsock: nl.NLSocket = None) -> None:
-    """
-     REQUIRES ROOT PRIVILEGES
-     disconnect the card from an AP
-     :param card: Card object
-     :param nlsock: netlink socket
-     NOTE: does not return error if card is not connected. May not work if
-     wpa_supplicant is running
+def disconnect(card: Card, nlsock: Optional[nl.NLSocket] = None) -> None:
+    """Disconnect the card from the access point.
+
+    .. note: does not return error if card is not connected. May not work if
+     wpa_supplicant is running.
+    .. warning: Requires root privileges.
     """
     if nlsock is None:
         return _nlstub_(disconnect, card)
@@ -1853,34 +1673,34 @@ def disconnect(card: Card, nlsock: nl.NLSocket = None) -> None:
         raise pyric.error(e.errno, e.strerror)
 
 
-def link(card: Card, nlsock: nl.NLSocket = None) -> Dict[str, Any]:
-    """
-     returns info about link (iw dev card.<dev> link)
-     :param card: Card object
-     :param nlsock: netlink socket
-     :returns: link info as dict  with the following key:value pairs
-       bssid -> AP mac/ net BSSID
-       ssid -> the ssid (Experimental)
-       freq -> BSSID frequency in MHz
-       chw -> width of the BSS control channel
-       rss -> Received signal strength in dBm
-       int -> beacon interval (ms)
-       stat -> status w.r.t of card to BSS one of {'authenticated','associated','ibss'}
-       tx -> tx metrics dict of the form
-        pkts -> total sent packets to connected STA (AP)
-        bytes -> total sent in bytes to connected STA (AP)
-        retries -> total # of retries
-        failed -> total # of failed
-        bitrate -> dict of form
-          rate -> tx rate in Mbits
-          width -> channel width oneof {None|20|40}
-          mcs-index -> mcs index (0..32) or None
-          gaurd -> guard interval oneof {None|0=short|1=long}
-          Note: width, mcs-index, guard will be None unless 802.11n is being used
-       rx -> rx metrics dict (see tx for format exluces retries and fails)
-      or None if the card is not connected
-     NOTE: if the nested attribute was not parsed correctly will attempt to pull
-      out as much as possible
+def link(card: Card, nlsock: Optional[nl.NLSocket] = None) -> Dict[str, Any]:
+    """Return information about link.
+    
+    (iw dev card.<dev> link)
+    
+    :returns: link info as dict  with the following key:value pairs
+      bssid -> AP mac/ net BSSID
+      ssid -> the ssid (Experimental)
+      freq -> BSSID frequency in MHz
+      chw -> width of the BSS control channel
+      rss -> Received signal strength in dBm
+      int -> beacon interval (ms)
+      stat -> status w.r.t of card to BSS one of {'authenticated','associated','ibss'}
+      tx -> tx metrics dict of the form
+       pkts -> total sent packets to connected STA (AP)
+       bytes -> total sent in bytes to connected STA (AP)
+       retries -> total # of retries
+       failed -> total # of failed
+       bitrate -> dict of form
+         rate -> tx rate in Mbits
+         width -> channel width oneof {None|20|40}
+         mcs-index -> mcs index (0..32) or None
+         gaurd -> guard interval oneof {None|0=short|1=long}
+         Note: width, mcs-index, guard will be None unless 802.11n is being used
+      rx -> rx metrics dict (see tx for format exluces retries and fails)
+     or None if the card is not connected
+    .. note: if the nested attribute was not parsed correctly will attempt to pull
+     out as much as possible
     """
     if nlsock is None:
         return _nlstub_(link, card)
@@ -1990,29 +1810,31 @@ def link(card: Card, nlsock: nl.NLSocket = None) -> Dict[str, Any]:
     return info
 
 
-def stainfo(card: Card, mac, nlsock: nl.NLSocket = None) -> Dict[str, Any]:
-    """
-     returns info about sta (AP) the card is associated with (iw dev card.<dev> link)
-     :param card: Card object
-     :param mac: mac address of STA
-     :param nlsock: netlink socket
-     :returns: sta info as dict  with the following key:value pairs
-      rx-bytes: total received bytes (from STA)
-      tx-bytes: total sent bytes (to STA)
-      rx-pkts: total received packets (from STA)
-      tx-pkts: total sent packets (to STA)
-      tx-bitrate: dict of the form
-       rate: bitrate in 100kbits/s
-       legacy: fallback bitrate in 100kbits/s (only present if rate is not determined)
-       mcs-index: mcs index (0..32) (only present if 802.11n)
-       gi: guard interval oneof {0=short|1=long} (only present if 802.11n)
-       width: channel width oneof {20|40}
-      rx-bitrate: see tx-bitrate
-     NOTE:
-      - if the nested attribute was not parsed correctly will attempt to pull
-       out as much as possible
-      - given msc index, guard interval and channel width, one can calculate the
-       802.11n rate (see wraith->standards->mcs)
+def stainfo(
+    card: Card, mac: str, nlsock: Optional[nl.NLSocket] = None
+) -> Dict[str, Any]:
+    """Return info about sta (AP) the card is associated with.
+    
+    (iw dev card.<dev> link)
+    
+    :param mac: mac address of STA
+    :returns: sta info as dict  with the following key:value pairs
+     rx-bytes: total received bytes (from STA)
+     tx-bytes: total sent bytes (to STA)
+     rx-pkts: total received packets (from STA)
+     tx-pkts: total sent packets (to STA)
+     tx-bitrate: dict of the form
+      rate: bitrate in 100kbits/s
+      legacy: fallback bitrate in 100kbits/s (only present if rate is not determined)
+      mcs-index: mcs index (0..32) (only present if 802.11n)
+      gi: guard interval oneof {0=short|1=long} (only present if 802.11n)
+      width: channel width oneof {20|40}
+     rx-bitrate: see tx-bitrate
+    .. note:
+     - if the nested attribute was not parsed correctly will attempt to pull
+      out as much as possible
+     - given msc index, guard interval and channel width, one can calculate the
+      802.11n rate (see wraith->standards->mcs)
     """
     if nlsock is None:
         return _nlstub_(stainfo, card, mac)
@@ -2178,7 +2000,7 @@ def _unsetf_(flags, flag):
     return flags & ~flag
 
 
-def _flagsget_(dev, iosock: socket.socket = None):
+def _flagsget_(dev, iosock: Optional[socket.socket] = None):
     """
      gets the device's flags
      :param dev: device name:
@@ -2200,7 +2022,7 @@ def _flagsget_(dev, iosock: socket.socket = None):
         raise pyric.error(e.errno, e.strerror)
 
 
-def _flagsset_(dev, flags, iosock: socket.socket = None):
+def _flagsset_(dev, flags, iosock: Optional[socket.socket] = None):
     """
      gets the device's flags
      :param dev: device name:
@@ -2471,7 +2293,7 @@ def _rateinfo_(ri):
 #### NETLINK/IOCTL PARAMETERS ####
 
 
-def _ifindex_(dev, iosock: socket.socket = None):
+def _ifindex_(dev, iosock: Optional[socket.socket] = None):
     """
      gets the ifindex for device
      :param dev: device name:
@@ -2568,7 +2390,7 @@ def _nlstub_(fct, *argv):
 #### PENDING ####
 
 
-def _fut_chset(card: Card, ch, chw, nlsock: nl.NLSocket = None):
+def _fut_chset(card: Card, ch, chw, nlsock: Optional[nl.NLSocket] = None):
     """
      set current channel on device (iw phy <card.phy> set channel <ch> <chw>
      :param card: Card object
