@@ -24,15 +24,6 @@ i.e. send/recv w.r.t ioctl calls
 
 """
 
-__name__ = "libio"
-__license__ = "GPLv3"
-__version__ = "0.0.1"
-__date__ = "April 2016"
-__author__ = "Dale Patterson"
-__maintainer__ = "Dale Patterson"
-__email__ = "wraith.wireless@yandex.com"
-__status__ = "Production"
-
 import socket
 import struct
 import errno
@@ -43,7 +34,7 @@ class error(EnvironmentError):
     pass
 
 
-def io_socket_alloc():
+def io_socket_alloc() -> socket.socket:
     """
      create a socket for ioctl calls
      :returns: an io socket
@@ -51,14 +42,14 @@ def io_socket_alloc():
     return socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 
 
-def io_socket_free(iosock):
+def io_socket_free(iosock: socket.socket):
     """ close the socket """
     if iosock:
         iosock.close()
     return None
 
 
-def io_transfer(iosock, flag, ifreq):
+def io_transfer(iosock: socket.socket, flag, ifreq):
     """
      send & recieve an ifreq struct
      :param iosock: io socket

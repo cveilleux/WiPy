@@ -79,7 +79,7 @@ class NLSocket(dict):
     def __new__(cls, d=None):
         return super(NLSocket, cls).__new__(cls, dict({} if not d else d))
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         """ :returns: description """
         fmt = "NLSocket(fd: {0}, pid: {1}, grpm: {2}, seq: {3}, tx: {4}, rx: {5})"
         return fmt.format(self.fd, self.pid, self.grpm, self.seq, self.tx, self.rx)
@@ -152,7 +152,7 @@ class NLSocket(dict):
 
     #### wrap socket functions
 
-    def incr(self):
+    def incr(self) -> None:
         """ increments seq num """
         self["seq"] += 1
 
@@ -168,7 +168,7 @@ class NLSocket(dict):
         """ :returns: msg from kernel """
         return self["sock"].recv(self.rx)
 
-    def close(self):
+    def close(self) -> None:
         """ closes the socket """
         if self["sock"]:
             self["sock"].close()
@@ -177,7 +177,9 @@ class NLSocket(dict):
         self["rx"] = self["tx"] = None
 
 
-def nl_socket_alloc(pid=None, grps=0, seq=None, rx=None, tx=None, timeout=None):
+def nl_socket_alloc(
+    pid=None, grps=0, seq=None, rx=None, tx=None, timeout=None
+) -> NLSocket:
     """
      create a netlink socket
      :param pid: port id
@@ -219,7 +221,7 @@ def nl_socket_alloc(pid=None, grps=0, seq=None, rx=None, tx=None, timeout=None):
     )
 
 
-def nl_socket_free(sock):
+def nl_socket_free(sock: socket.socket):
     """ close the socket """
     try:
         sock.close()

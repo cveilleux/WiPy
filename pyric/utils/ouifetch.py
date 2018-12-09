@@ -23,6 +23,7 @@ oui dict as determined by IEEE oui.txt
 
 """
 from __future__ import print_function  # python 2to3 compability
+from typing import Dict
 
 __name__ = "ouifetch"
 __license__ = "GPLv3"
@@ -59,7 +60,7 @@ OUIURL = "http://standards-oui.ieee.org/oui.txt"
 OUIPATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "data/oui.txt")
 
 
-def load(opath=None):
+def load(opath: str = None) -> Dict[str, str]:
     """
      parse oui.txt file
      :param opath: path of oui text file
