@@ -11,6 +11,7 @@ pydocstyle = "*"
 pyflakes = "*"
 pytest = "*"
 black = "*"
+isort = "*"
 
 [packages]
 
