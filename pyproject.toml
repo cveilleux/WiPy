@@ -1,0 +1,47 @@
+[tool.poetry]
+name = "pyric"
+version = "0.1.0"
+description = "Python Wireless Library"
+license = "GPL-3.0+"
+authors = ["Dale Patterson <wraith.wireless@yandex.com>",
+           "Brian Smith <brian.smith@riseup.net>"]
+readme = "README.md"
+repository = "https://github.com/wifiphisher/WiPy"
+homepage = "https://github.com/wifiphisher/WiPy"
+keywords = ["wireless", "Linux", "nl80211", "WiFi", "iw"]
+documentation = "https://wifiphisher.readthedocs.io/en/latest/"
+classifiers=[
+        "Intended Audience :: Developers",
+        "Intended Audience :: System Administrators', 'Topic :: Security",
+        "Topic :: Software Development",
+        "Topic :: Software Development :: Libraries', 'Topic :: Security",
+        "Topic :: System :: Networking", 
+        "Topic :: Utilities",
+        "Operating System :: POSIX :: Linux",
+        "Programming Language :: Python"
+]
+include = ["nlhelp/*.help", "utils/data/*.txt"]
+
+[tool.poetry.dependencies]
+python = "^3.7"
+
+[tool.poetry.dev-dependencies]
+black = {version = "^18.3-alpha.0",allows-prereleases = true}
+mypy = "^0.650.0"
+pylint = "^2.2"
+pycodestyle = "^2.4"
+pydocstyle = "^3.0"
+pytest = "^4.0"
+isort = "^4.3"
+pyflakes = "^2.0"
+
+[build-system]
+requires = ["poetry>=0.12"]
+build-backend = "poetry.masonry.api"
+
+[tool.isort]
+multi_line_output=3
+include_trailing_comma = true
+force_grid_wrap = 0
+use_parentheses = true
+line_length=88

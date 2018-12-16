@@ -1,10 +1,10 @@
 init:
-		pipenv install --dev
+		poetry install
 
 test:
 
-		pipenv run pytest tests
-		pipenv run black --check --diff pyric/
+		poetry run pytest tests
+		poetry run black --check --diff pyric/
 
 format:
-		pipenv run black pyric/
+		poetry run black pyric/
