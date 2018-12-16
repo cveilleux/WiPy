@@ -30,10 +30,6 @@ import errno
 from fcntl import ioctl
 
 
-class error(EnvironmentError):
-    pass
-
-
 def io_socket_alloc() -> socket.socket:
     """
      create a socket for ioctl calls
@@ -62,16 +58,16 @@ def io_transfer(iosock: socket.socket, flag, ifreq):
     except (AttributeError, struct.error) as e:
         # either sock is not valid or a bad value passed to ifreq
         if e.message.find("fileno"):
-            raise error(errno.ENOTSOCK, "Bad socket")
+            raise EnvironmentError(errno.ENOTSOCK, "Bad socket")
         else:
-            raise error(errno.EINVAL, e)
+            raise EnvironmentError(errno.EINVAL, e)
     except IOError as e:
         # generally device cannot be found sort but can also be
         # permissions etc, catch and reraise as our own
         if e.errno is not None:  # just in case we have a none 2-tuple error
-            raise error(e.errno, e.strerror)
+            raise EnvironmentError(e.errno, e.strerror)
         else:
-            raise error(-1, e)
+            raise EnvironmentError(-1, "Undefined error")
     except Exception as e:
         # blanket catchall
-        raise error(-1, e.args[0])
+        raise EnvironmentError(-1, e.args[0])

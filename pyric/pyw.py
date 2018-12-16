@@ -71,7 +71,6 @@ NOTE:
 
 import struct  # ioctl unpacking
 import re  # check addr validity
-import pyric  # pyric exception
 from pyric.nlhelp.nlsearch import cmdbynum  # get command name
 import pyric.utils.channels as channels  # channel related
 import pyric.utils.rfkill as rfkill  # block/unblock
@@ -89,7 +88,10 @@ import os
 import socket
 from typing import List, Tuple, Union, Dict, Any, Optional
 from dataclasses import dataclass
+from os import strerror
+from errno import EINVAL, ENOTDIR, ENONET, ENODEV, EADDRNOTAVAIL, ENOENT, EAFNOSUPPORT
 
+EUNDEF = -1  # undefined error
 _FAM80211ID_ = None
 
 # redefine some nl80211 enum lists for ease of use
@@ -147,8 +149,8 @@ def iswireless(dev: str, iosock: Optional[socket.socket] = None) -> bool:
         _ = io.io_transfer(iosock, sioch.SIOCGIWNAME, ifh.ifreq(dev))
         return True
     except AttributeError as e:
-        raise pyric.error(pyric.EINVAL, e)
-    except io.error:
+        raise EnvironmentError(EINVAL, e)
+    except EnvironmentError:
         return False
 
 
@@ -169,20 +171,20 @@ def phylist() -> List[Tuple[int, str]]:
                 phys.append((int(rfk.split("phy")[1]), rfk))
     except IOError as e:
         # catch 'No such file or directory' errors when rfkill is not supported
-        if e.errno == pyric.ENOENT:
+        if e.errno == ENOENT:
             try:
                 rfdevs = os.listdir(rfkill.ipath)
             except OSError:
                 emsg = "{} is not a directory & rfkill is not supported".format(
                     rfkill.ipath
                 )
-                raise pyric.error(pyric.ENOTDIR, emsg)
+                raise EnvironmentError(ENOTDIR, emsg)
             else:
                 for rfk in rfdevs:
                     phys.append((int(rfk.split("phy")[1]), rfk))
         else:
-            raise pyric.error(
-                pyric.EUNDEF, "PHY listing failed: {}-{}".format(e.errno, e.strerror)
+            raise EnvironmentError(
+                EUNDEF, f"PHY listing failed: {e.errno}-{e.strerror}"
             )
     return phys
 
@@ -204,7 +206,7 @@ def regget(nlsock: Optional[nl.NLSocket] = None) -> str:
         nl.nl_sendmsg(nlsock, msg)
         rmsg = nl.nl_recvmsg(nlsock)
     except nl.error as e:
-        raise pyric.error(e.errno, e.strerror)
+        raise EnvironmentError(e.errno, e.strerror)
     return nl.nla_find(rmsg, nl80211h.NL80211_ATTR_REG_ALPHA2)
 
 
@@ -216,7 +218,7 @@ def regset(rd: str, nlsock: Optional[nl.NLSocket] = None):
     .. warning:: Requires root privileges
     """
     if len(rd) != 2:
-        raise pyric.error(pyric.EINVAL, "Invalid reg. domain")
+        raise EnvironmentError(EINVAL, "Invalid reg. domain")
     if nlsock is None:
         return _nlstub_(regset, rd)
 
@@ -230,7 +232,7 @@ def regset(rd: str, nlsock: Optional[nl.NLSocket] = None):
         nl.nl_sendmsg(nlsock, msg)
         _ = nl.nl_recvmsg(nlsock)
     except nl.error as e:
-        raise pyric.error(e.errno, e.strerror)
+        raise EnvironmentError(e.errno, e.strerror)
 
 
 ################################################################################
@@ -267,8 +269,8 @@ def validcard(card: Card, nlsock: Optional[nl.NLSocket] = None) -> bool:
 
     try:
         return card == devinfo(card.dev, nlsock)["card"]
-    except pyric.error as e:
-        if e.errno == pyric.ENODEV:
+    except EnvironmentError as e:
+        if e.errno == ENODEV:
             return False
         else:
             raise
@@ -291,13 +293,13 @@ def macget(card: Card, iosock: Optional[socket.socket] = None) -> str:
         if fam in [ifh.ARPHRD_ETHER, ifh.AF_UNSPEC, ifh.ARPHRD_IEEE80211_RADIOTAP]:
             return _hex2mac_(ret[18:24])
         else:
-            raise pyric.error(pyric.EAFNOSUPPORT, "Invalid return hwaddr family")
+            raise EnvironmentError(EAFNOSUPPORT, "Invalid return hwaddr family")
     except AttributeError as e:
-        raise pyric.error(pyric.EINVAL, e)
+        raise EnvironmentError(EINVAL, e)
     except struct.error as e:
-        raise pyric.error(pyric.EUNDEF, "Error parsing results: {0}".format(e))
-    except io.error as e:
-        raise pyric.error(e.errno, e.strerror)
+        raise EnvironmentError(EUNDEF, f"Error parsing results: {e}")
+    except EnvironmentError as e:
+        raise EnvironmentError(e.errno, e.strerror)
 
 
 def macset(card: Card, mac: str, iosock: Optional[socket.socket] = None) -> bool:
@@ -306,7 +308,7 @@ def macset(card: Card, mac: str, iosock: Optional[socket.socket] = None) -> bool
     .. warning:: Requires root privileges
     """
     if not _validmac_(mac):
-        raise pyric.error(pyric.EINVAL, "Invalid mac address")
+        raise EnvironmentError(EINVAL, "Invalid mac address")
     if iosock is None:
         return _iostub_(macset, card, mac)
 
@@ -317,13 +319,13 @@ def macset(card: Card, mac: str, iosock: Optional[socket.socket] = None) -> bool
         if fam in [ifh.ARPHRD_ETHER, ifh.AF_UNSPEC, ifh.ARPHRD_IEEE80211_RADIOTAP]:
             return _hex2mac_(ret[18:24]) == mac
         else:
-            raise pyric.error(pyric.EAFNOSUPPORT, "Invalid return hwaddr family")
+            raise EnvironmentError(EAFNOSUPPORT, "Invalid return hwaddr family")
     except AttributeError as e:
-        raise pyric.error(pyric.EINVAL, e)
+        raise EnvironmentError(EINVAL, e)
     except struct.error as e:
-        raise pyric.error(pyric.EUNDEF, "Error parsing results: {0}".format(e))
-    except io.error as e:
-        raise pyric.error(e.errno, e.strerror)
+        raise EnvironmentError(EUNDEF, f"Error parsing results: {e}")
+    except EnvironmentError as e:
+        raise EnvironmentError(e.errno, e.strerror)
 
 
 def ifaddrget(
@@ -344,7 +346,7 @@ def ifaddrget(
         if fam == ifh.AF_INET:
             inet = _hex2ip4_(ret[20:24])
         else:
-            raise pyric.error(pyric.EAFNOSUPPORT, "Invalid return ip family")
+            raise EnvironmentError(EAFNOSUPPORT, "Invalid return ip family")
 
         # netmask
         flag = sioch.SIOCGIFNETMASK
@@ -353,7 +355,7 @@ def ifaddrget(
         if fam == ifh.AF_INET:
             mask = _hex2ip4_(ret[20:24])
         else:
-            raise pyric.error(pyric.EAFNOSUPPORT, "Invalid return netmask family")
+            raise EnvironmentError(EAFNOSUPPORT, "Invalid return netmask family")
 
         # broadcast
         flag = sioch.SIOCGIFBRDADDR
@@ -362,17 +364,17 @@ def ifaddrget(
         if fam == ifh.AF_INET:
             bcast = _hex2ip4_(ret[20:24])
         else:
-            raise pyric.error(pyric.EAFNOSUPPORT, "Invalid return broadcast family")
+            raise EnvironmentError(EAFNOSUPPORT, "Invalid return broadcast family")
     except AttributeError as e:
-        raise pyric.error(pyric.EINVAL, e)
+        raise EnvironmentError(EINVAL, e)
     except struct.error as e:
-        raise pyric.error(pyric.EUNDEF, "Error parsing results: {0}".format(e))
-    except io.error as e:
+        raise EnvironmentError(EUNDEF, f"Error parsing results: {e}")
+    except EnvironmentError as e:
         # catch address not available, which means the card currently does not
         # have any addresses set - raise others
-        if e.errno == pyric.EADDRNOTAVAIL:
+        if e.errno == EADDRNOTAVAIL:
             return None, None, None
-        raise pyric.error(e.errno, e.strerror)
+        raise EnvironmentError(e.errno, e.strerror)
 
     return inet, mask, bcast
 
@@ -401,13 +403,13 @@ def ifaddrset(
     """
     # ensure one of params is set & that all set params are valid ip address
     if not inet and not mask and not bcast:
-        raise pyric.error(pyric.EINVAL, "No parameters specified")
+        raise EnvironmentError(EINVAL, "No parameters specified")
     if inet and not _validip4_(inet):
-        raise pyric.error(pyric.EINVAL, "Invalid IP address")
+        raise EnvironmentError(EINVAL, "Invalid IP address")
     if mask and not _validip4_(mask):
-        raise pyric.error(pyric.EINVAL, "Invalid netmask")
+        raise EnvironmentError(EINVAL, "Invalid netmask")
     if bcast and not _validip4_(bcast):
-        raise pyric.error(pyric.EINVAL, "Invalid broadcast")
+        raise EnvironmentError(EINVAL, "Invalid broadcast")
     if iosock is None:
         return _iostub_(ifaddrset, card, inet, mask, bcast)
 
@@ -421,17 +423,17 @@ def ifaddrset(
         if bcast:
             success &= bcastset(card, bcast, iosock)
         return success
-    except pyric.error as e:
+    except EnvironmentError as e:
         # an ambiguous error is thrown if attempting to set netmask or broadcast
         # without an ip address already set on the card
-        if e.errno == pyric.EADDRNOTAVAIL and inet is None:
-            raise pyric.error(pyric.EINVAL, "Set ip4 addr first")
+        if e.errno == EADDRNOTAVAIL and inet is None:
+            raise EnvironmentError(EINVAL, "Set ip4 addr first")
         else:
             raise
     except AttributeError as e:
-        raise pyric.error(pyric.EINVAL, e)
+        raise EnvironmentError(EINVAL, e)
     except struct.error as e:
-        raise pyric.error(pyric.EUNDEF, "Error parsing results: {0}".format(e))
+        raise EnvironmentError(EUNDEF, f"Error parsing results: {e}")
 
 
 def inetset(card: Card, inet, iosock: Optional[socket.socket] = None) -> bool:
@@ -441,7 +443,7 @@ def inetset(card: Card, inet, iosock: Optional[socket.socket] = None) -> bool:
     .. warning:: Requires root privileges
     """
     if not _validip4_(inet):
-        raise pyric.error(pyric.EINVAL, "Invalid IP")
+        raise EnvironmentError(EINVAL, "Invalid IP")
     if iosock is None:
         return _iostub_(inetset, card, inet)
 
@@ -452,13 +454,13 @@ def inetset(card: Card, inet, iosock: Optional[socket.socket] = None) -> bool:
         if fam == ifh.AF_INET:
             return _hex2ip4_(ret[20:24]) == inet
         else:
-            raise pyric.error(pyric.EAFNOSUPPORT, "Invalid return ip family")
+            raise EnvironmentError(EAFNOSUPPORT, "Invalid return ip family")
     except AttributeError as e:
-        raise pyric.error(pyric.EINVAL, e)
+        raise EnvironmentError(EINVAL, e)
     except struct.error as e:
-        raise pyric.error(pyric.EUNDEF, "Error parsing results: {0}".format(e))
-    except io.error as e:
-        raise pyric.error(e.errno, e.strerror)
+        raise EnvironmentError(EUNDEF, f"Error parsing results: {e}")
+    except EnvironmentError as e:
+        raise EnvironmentError(e.errno, e.strerror)
 
 
 def maskset(card: Card, mask: str, iosock: Optional[socket.socket] = None) -> bool:
@@ -469,7 +471,7 @@ def maskset(card: Card, mask: str, iosock: Optional[socket.socket] = None) -> bo
     .. warning:: Requires root privileges
     """
     if not _validip4_(mask):
-        raise pyric.error(pyric.EINVAL, "Invalid netmask")
+        raise EnvironmentError(EINVAL, "Invalid netmask")
     if iosock is None:
         return _iostub_(maskset, card, mask)
     try:
@@ -479,18 +481,18 @@ def maskset(card: Card, mask: str, iosock: Optional[socket.socket] = None) -> bo
         if fam == ifh.AF_INET:
             return _hex2ip4_(ret[20:24]) == mask
         else:
-            raise pyric.error(pyric.EAFNOSUPPORT, "Invalid return netmask family")
+            raise EnvironmentError(EAFNOSUPPORT, "Invalid return netmask family")
     except AttributeError as e:
-        raise pyric.error(pyric.EINVAL, e)
+        raise EnvironmentError(EINVAL, e)
     except struct.error as e:
-        raise pyric.error(pyric.EUNDEF, "Error parsing results: {0}".format(e))
-    except io.error as e:
+        raise EnvironmentError(EUNDEF, f"Error parsing results: {e}")
+    except EnvironmentError as e:
         # an ambiguous error is thrown if attempting to set netmask or broadcast
         # without an ip address already set on the card
-        if e.errno == pyric.EADDRNOTAVAIL:
-            raise pyric.error(pyric.EINVAL, "Cannot set netmask. Set ip first")
+        if e.errno == EADDRNOTAVAIL:
+            raise EnvironmentError(EINVAL, "Cannot set netmask. Set ip first")
         else:
-            raise pyric.error(e, e.strerror)
+            raise EnvironmentError(e, e.strerror)
 
 
 def bcastset(card: Card, bcast: str, iosock: Optional[socket.socket] = None) -> bool:
@@ -503,7 +505,7 @@ def bcastset(card: Card, bcast: str, iosock: Optional[socket.socket] = None) -> 
     .. warning:: Requires root privileges
     """
     if not _validip4_(bcast):
-        raise pyric.error(pyric.EINVAL, "Invalid bcast")
+        raise EnvironmentError(EINVAL, "Invalid bcast")
     if iosock is None:
         return _iostub_(bcastset, card, bcast)
 
@@ -515,25 +517,25 @@ def bcastset(card: Card, bcast: str, iosock: Optional[socket.socket] = None) -> 
         if fam == ifh.AF_INET:
             return _hex2ip4_(ret[20:24]) == bcast
         else:
-            raise pyric.error(pyric.EAFNOSUPPORT, "Invalid return broadcast family")
-    except pyric.error as e:
+            raise EnvironmentError(EAFNOSUPPORT, "Invalid return broadcast family")
+    except EnvironmentError as e:
         # an ambiguous error is thrown if attempting to set netmask or broadcast
         # without an ip address already set on the card
-        if e.errno == pyric.EADDRNOTAVAIL:
-            raise pyric.error(pyric.EINVAL, "Cannot set broadcast. Set ip first")
+        if e.errno == EADDRNOTAVAIL:
+            raise EnvironmentError(EINVAL, "Cannot set broadcast. Set ip first")
         else:
             raise
     except AttributeError as e:
-        raise pyric.error(pyric.EINVAL, e)
+        raise EnvironmentError(EINVAL, e)
     except struct.error as e:
-        raise pyric.error(pyric.EUNDEF, "Error parsing results: {0}".format(e))
-    except io.error as e:
+        raise EnvironmentError(EUNDEF, f"Error parsing results: {e}")
+    except EnvironmentError as e:
         # an ambiguous error is thrown if attempting to set netmask or broadcast
         # without an ip address already set on the card
-        if e.errno == pyric.EADDRNOTAVAIL:
-            raise pyric.error(pyric.EINVAL, "Cannot set broadcast. Set ip first")
+        if e.errno == EADDRNOTAVAIL:
+            raise EnvironmentError(EINVAL, "Cannot set broadcast. Set ip first")
         else:
-            raise pyric.error(e, e.strerror)
+            raise EnvironmentError(e, e.strerror)
 
 
 ################################################################################
@@ -549,7 +551,7 @@ def isup(card: Card, iosock: Optional[socket.socket] = None) -> bool:
     try:
         return _issetf_(_flagsget_(card.dev, iosock), ifh.IFF_UP)
     except AttributeError:
-        raise pyric.error(pyric.EINVAL, "Invalid Card")
+        raise EnvironmentError(EINVAL, "Invalid Card")
 
 
 def up(card: Card, iosock: Optional[socket.socket] = None) -> None:
@@ -565,7 +567,7 @@ def up(card: Card, iosock: Optional[socket.socket] = None) -> None:
         if not _issetf_(flags, ifh.IFF_UP):
             _flagsset_(card.dev, _setf_(flags, ifh.IFF_UP), iosock)
     except AttributeError:
-        raise pyric.error(pyric.EINVAL, "Invalid Card")
+        raise EnvironmentError(EINVAL, "Invalid Card")
 
 
 def down(card: Card, iosock: Optional[socket.socket] = None) -> None:
@@ -581,7 +583,7 @@ def down(card: Card, iosock: Optional[socket.socket] = None) -> None:
         if _issetf_(flags, ifh.IFF_UP):
             _flagsset_(card.dev, _unsetf_(flags, ifh.IFF_UP), iosock)
     except AttributeError:
-        raise pyric.error(pyric.EINVAL, "Invalid Card")
+        raise EnvironmentError(EINVAL, "Invalid Card")
 
 
 def isblocked(card: Card) -> Tuple[bool, bool]:
@@ -594,7 +596,7 @@ def isblocked(card: Card) -> Tuple[bool, bool]:
         idx = rfkill.getidx(card.phy)
         return rfkill.soft_blocked(idx), rfkill.hard_blocked(idx)
     except AttributeError:
-        raise pyric.error(pyric.ENODEV, "Card is no longer registered")
+        raise EnvironmentError(ENODEV, "Card is no longer registered")
 
 
 def block(card: Card) -> None:
@@ -603,7 +605,7 @@ def block(card: Card) -> None:
         idx = rfkill.getidx(card.phy)
         rfkill.rfkill_block(idx)
     except AttributeError:
-        raise pyric.error(pyric.ENODEV, "Card is no longer registered")
+        raise EnvironmentError(ENODEV, "Card is no longer registered")
 
 
 def unblock(card: Card) -> None:
@@ -612,7 +614,7 @@ def unblock(card: Card) -> None:
         idx = rfkill.getidx(card.phy)
         rfkill.rfkill_unblock(idx)
     except AttributeError:
-        raise pyric.error(pyric.ENODEV, "Card is no longer registered")
+        raise EnvironmentError(ENODEV, "Card is no longer registered")
 
 
 ################################################################################
@@ -635,9 +637,9 @@ def pwrsaveget(card: Card, nlsock: Optional[nl.NLSocket] = None) -> bool:
         nl.nl_sendmsg(nlsock, msg)
         rmsg = nl.nl_recvmsg(nlsock)
     except AttributeError:
-        raise pyric.error(pyric.EINVAL, "Invalid Card")
+        raise EnvironmentError(EINVAL, "Invalid Card")
     except nl.error as e:
-        raise pyric.error(e.errno, e.strerror)
+        raise EnvironmentError(e.errno, e.strerror)
 
     return nl.nla_find(rmsg, nl80211h.NL80211_ATTR_PS_STATE) == 1
 
@@ -661,11 +663,11 @@ def pwrsaveset(card: Card, on: bool, nlsock: Optional[nl.NLSocket] = None):
         nl.nl_sendmsg(nlsock, msg)
         _ = nl.nl_recvmsg(nlsock)
     except AttributeError:
-        raise pyric.error(pyric.EINVAL, "Invalid Card")
+        raise EnvironmentError(EINVAL, "Invalid Card")
     except ValueError:
-        raise pyric.error(pyric.EINVAL, "Invalid parameter {0} for on".format(on))
+        raise EnvironmentError(EINVAL, f"Invalid parameter {on} for on")
     except nl.error as e:
-        raise pyric.error(e.errno, e.strerror)
+        raise EnvironmentError(e.errno, e.strerror)
 
 
 def covclassget(card: Card, nlsock: Optional[nl.NLSocket] = None):
@@ -692,7 +694,7 @@ def covclassset(card: Card, cc: int, nlsock: Optional[nl.NLSocket] = None) -> No
         emsg = "Cov class must be integer {0}-{1}".format(
             wlan.COV_CLASS_MIN, wlan.COV_CLASS_MAX
         )
-        raise pyric.error(pyric.EINVAL, emsg)
+        raise EnvironmentError(EINVAL, emsg)
     if nlsock is None:
         return _nlstub_(covclassset, card, cc)
 
@@ -707,11 +709,11 @@ def covclassset(card: Card, cc: int, nlsock: Optional[nl.NLSocket] = None) -> No
         nl.nl_sendmsg(nlsock, msg)
         _ = nl.nl_recvmsg(nlsock)
     except AttributeError:
-        raise pyric.error(pyric.EINVAL, "Invalid Card")
+        raise EnvironmentError(EINVAL, "Invalid Card")
     except ValueError:
-        raise pyric.error(pyric.EINVAL, "Invalid value {0} for Cov. Class".format(cc))
+        raise EnvironmentError(EINVAL, f"Invalid value {cc} for Cov. Class")
     except nl.error as e:
-        raise pyric.error(e.errno, e.strerror)
+        raise EnvironmentError(e.errno, e.strerror)
 
 
 def retryshortget(card: Card, nlsock: Optional[nl.NLSocket] = None):
@@ -734,7 +736,7 @@ def retryshortset(card: Card, lim: int, nlsock: Optional[nl.NLSocket] = None):
         emsg = "Retry short must be integer {0}-{1}".format(
             wlan.RETRY_MIN, wlan.RETRY_MAX
         )
-        raise pyric.error(pyric.EINVAL, emsg)
+        raise EnvironmentError(EINVAL, emsg)
     if nlsock is None:
         return _nlstub_(retryshortset, card, lim)
 
@@ -749,11 +751,11 @@ def retryshortset(card: Card, lim: int, nlsock: Optional[nl.NLSocket] = None):
         nl.nl_sendmsg(nlsock, msg)
         _ = nl.nl_recvmsg(nlsock)
     except AttributeError:
-        raise pyric.error(pyric.EINVAL, "Invalid Card")
+        raise EnvironmentError(EINVAL, "Invalid Card")
     except ValueError:
-        raise pyric.error(pyric.EINVAL, "Invalid value {0} for lim".format(lim))
+        raise EnvironmentError(EINVAL, f"Invalid value {lim} for lim")
     except nl.error as e:
-        raise pyric.error(e.errno, e.strerror)
+        raise EnvironmentError(e.errno, e.strerror)
 
 
 def retrylongget(card: Card, nlsock: Optional[nl.NLSocket] = None):
@@ -777,7 +779,7 @@ def retrylongset(card: Card, lim: int, nlsock: Optional[nl.NLSocket] = None):
         emsg = "Retry long must be integer {0}-{1}".format(
             wlan.RETRY_MIN, wlan.RETRY_MAX
         )
-        raise pyric.error(pyric.EINVAL, emsg)
+        raise EnvironmentError(EINVAL, emsg)
     if nlsock is None:
         return _nlstub_(retrylongset, card, lim)
 
@@ -792,11 +794,11 @@ def retrylongset(card: Card, lim: int, nlsock: Optional[nl.NLSocket] = None):
         nl.nl_sendmsg(nlsock, msg)
         _ = nl.nl_recvmsg(nlsock)
     except AttributeError:
-        raise pyric.error(pyric.EINVAL, "Invalid Card")
+        raise EnvironmentError(EINVAL, "Invalid Card")
     except ValueError:
-        raise pyric.error(pyric.EINVAL, "Invalid value {0} for lim".format(lim))
+        raise EnvironmentError(EINVAL, f"Invalid value {lim} for lim")
     except nl.error as e:
-        raise pyric.error(e.errno, e.strerror)
+        raise EnvironmentError(e.errno, e.strerror)
 
 
 def rtsthreshget(card: Card, nlsock: Optional[nl.NLSocket] = None):
@@ -825,7 +827,7 @@ def rtsthreshset(card: Card, thresh: int, nlsock: Optional[nl.NLSocket] = None):
         emsg = "Thresh must be 'off' or integer {0}-{1}".format(
             wlan.RTS_THRESH_MIN, wlan.RTS_THRESH_MAX
         )
-        raise pyric.error(pyric.EINVAL, emsg)
+        raise EnvironmentError(EINVAL, emsg)
     if nlsock is None:
         return _nlstub_(rtsthreshset, card, thresh)
 
@@ -840,11 +842,11 @@ def rtsthreshset(card: Card, thresh: int, nlsock: Optional[nl.NLSocket] = None):
         nl.nl_sendmsg(nlsock, msg)
         _ = nl.nl_recvmsg(nlsock)
     except AttributeError:
-        raise pyric.error(pyric.EINVAL, "Invalid Card")
+        raise EnvironmentError(EINVAL, "Invalid Card")
     except ValueError:
-        raise pyric.error(pyric.EINVAL, "Invalid value {0} for thresh".format(thresh))
+        raise EnvironmentError(EINVAL, f"Invalid value {thresh} for thresh")
     except nl.error as e:
-        raise pyric.error(e.errno, e.strerror)
+        raise EnvironmentError(e.errno, e.strerror)
 
 
 def fragthreshget(card: Card, nlsock: Optional[nl.NLSocket] = None):
@@ -874,7 +876,7 @@ def fragthreshset(card: Card, thresh, nlsock: Optional[nl.NLSocket] = None):
         emsg = "Thresh must be 'off' or integer {0}-{1}".format(
             wlan.FRAG_THRESH_MIN, wlan.FRAG_THRESH_MAX
         )
-        raise pyric.error(pyric.EINVAL, emsg)
+        raise EnvironmentError(EINVAL, emsg)
     if nlsock is None:
         return _nlstub_(fragthreshset, card, thresh)
 
@@ -889,9 +891,9 @@ def fragthreshset(card: Card, thresh, nlsock: Optional[nl.NLSocket] = None):
         nl.nl_sendmsg(nlsock, msg)
         _ = nl.nl_recvmsg(nlsock)
     except AttributeError:
-        raise pyric.error(pyric.EINVAL, "Invalid Card")
+        raise EnvironmentError(EINVAL, "Invalid Card")
     except nl.error as e:
-        raise pyric.error(e.errno, e.strerror)
+        raise EnvironmentError(e.errno, e.strerror)
 
 
 ################################################################################
@@ -989,7 +991,7 @@ def ifinfo(card: Card, iosock: Optional[socket.socket] = None) -> Dict[str, Any]
     ouis: Dict[str, str] = {}
     try:
         ouis = ouifetch.load()
-    except pyric.error:
+    except EnvironmentError:
         pass
 
     try:
@@ -1006,7 +1008,7 @@ def ifinfo(card: Card, iosock: Optional[socket.socket] = None) -> Dict[str, Any]
             "mask": nmask,
         }
     except AttributeError:
-        raise pyric.error(pyric.EINVAL, "Invalid Card")
+        raise EnvironmentError(EINVAL, "Invalid Card")
 
     return info
 
@@ -1047,18 +1049,18 @@ def devinfo(card: Union[Card, str], nlsock: Optional[nl.NLSocket] = None):
         rmsg = nl.nl_recvmsg(nlsock)
     except io.error as e:
         # if we get a errno -19, it means ifindex failed & there is no device dev
-        raise pyric.error(e.errno, e.strerror)
+        raise EnvironmentError(e.errno, e.strerror)
     except nl.error as e:
         # if we get a errno -19, it is mostly likely because the card does
         # not support nl80211. However check to ensure the card hasn't been
         # unplugged.
-        if e.errno == pyric.ENODEV:
+        if e.errno == ENODEV:
             try:
                 _ = _ifindex_(dev)
             except io.error as e:
-                raise pyric.error(e.errno, "{0}. Check Card".format(e.strerror))
-            raise pyric.error(pyric.EPROTONOSUPPORT, "Device does not support nl80211")
-        raise pyric.error(e.errno, e.strerror)
+                raise EnvironmentError(e.errno, f"{e.strerror}. Check Card")
+            raise EnvironmentError(EPROTONOSUPPORT, "Device does not support nl80211")
+        raise EnvironmentError(e.errno, e.strerror)
 
     # pull out attributes
     info = {
@@ -1115,9 +1117,9 @@ def phyinfo(card: Card, nlsock: Optional[nl.NLSocket] = None) -> Dict[str, Any]:
         nl.nl_sendmsg(nlsock, msg)
         rmsg = nl.nl_recvmsg(nlsock)
     except AttributeError:
-        raise pyric.error(pyric.EINVAL, "Invalid Card")
+        raise EnvironmentError(EINVAL, "Invalid Card")
     except nl.error as e:
-        raise pyric.error(e.errno, e.strerror)
+        raise EnvironmentError(e.errno, e.strerror)
 
     # pull out attributes
     info = {
@@ -1186,9 +1188,9 @@ def txset(card: Card, setting, lvl: str, nlsock: Optional[nl.NLSocket] = None) -
     """
     # sanity check on power setting and power level
     if not setting in TXPWRSETTINGS:
-        raise pyric.error(pyric.EINVAL, "Invalid power setting {0}".format(setting))
+        raise EnvironmentError(EINVAL, f"Invalid power setting {setting}")
     if setting != "auto" and lvl is None:
-        raise pyric.error(pyric.EINVAL, "Power level must be specified")
+        raise EnvironmentError(EINVAL, "Power level must be specified")
     if nlsock is None:
         return _nlstub_(txset, card, setting, lvl)
 
@@ -1209,11 +1211,11 @@ def txset(card: Card, setting, lvl: str, nlsock: Optional[nl.NLSocket] = None) -
         _ = nl.nl_recvmsg(nlsock)
     except ValueError:
         # converting to mBm
-        raise pyric.error(pyric.EINVAL, "Invalid value {0} for txpwr".format(lvl))
+        raise EnvironmentError(EINVAL, f"Invalid value {lvl} for txpwr")
     except AttributeError:
-        raise pyric.error(pyric.EINVAL, "Invalid Card")
+        raise EnvironmentError(EINVAL, "Invalid Card")
     except nl.error as e:
-        raise pyric.error(e.errno, e.strerror)
+        raise EnvironmentError(e.errno, e.strerror)
 
 
 def txget(card: Card, iosock: Optional[socket.socket] = None):
@@ -1231,13 +1233,13 @@ def txget(card: Card, iosock: Optional[socket.socket] = None):
         ret = io.io_transfer(iosock, flag, ifh.ifreq(card.dev, flag))
         return struct.unpack_from(ifh.ifr_iwtxpwr, ret, ifh.IFNAMELEN)[0]
     except AttributeError as e:
-        raise pyric.error(pyric.EINVAL, e)
+        raise EnvironmentError(EINVAL, e)
     except IndexError:
         return None
     except struct.error as e:
-        raise pyric.error(pyric.EUNDEF, "Error parsing results: {0}".format(e))
+        raise EnvironmentError(EUNDEF, f"Error parsing results: {e}")
     except io.error as e:
-        raise pyric.error(e.errno, e.strerror)
+        raise EnvironmentError(e.errno, e.strerror)
 
 
 def chget(card: Card, nlsock: Optional[nl.NLSocket] = None):
@@ -1307,13 +1309,13 @@ def freqset(
         nl.nl_sendmsg(nlsock, msg)
         _ = nl.nl_recvmsg(nlsock)
     except ValueError:
-        raise pyric.error(pyric.EINVAL, "Invalid channel width")
+        raise EnvironmentError(EINVAL, "Invalid channel width")
     except AttributeError:
-        raise pyric.error(pyric.EINVAL, "Invalid Card")
+        raise EnvironmentError(EINVAL, "Invalid Card")
     except nl.error as e:
-        if e.errno == pyric.EBUSY:
-            raise pyric.error(e.errno, pyric.strerror(e.errno))
-        raise pyric.error(e.errno, e.strerror)
+        if e.errno == EBUSY:
+            raise EnvironmentError(e.errno, strerror(e.errno))
+        raise EnvironmentError(e.errno, e.strerror)
 
 
 #### INTERFACE & MODE RELATED ####
@@ -1341,13 +1343,13 @@ def modeset(
     .. note: as far
     """
     if mode not in IFTYPES:
-        raise pyric.error(pyric.EINVAL, "Invalid mode")
+        raise EnvironmentError(EINVAL, "Invalid mode")
     if flags and mode != "monitor":
-        raise pyric.error(pyric.EINVAL, "Can only set flags in monitor mode")
+        raise EnvironmentError(EINVAL, "Can only set flags in monitor mode")
     if flags:
         for flag in flags:
             if flag not in MNTRFLAGS:
-                raise pyric.error(pyric.EINVAL, "Invalid flag: {0}".format(flag))
+                raise EnvironmentError(EINVAL, f"Invalid flag: {flag}")
     else:
         flags = []
     if nlsock is None:
@@ -1366,9 +1368,9 @@ def modeset(
         nl.nl_sendmsg(nlsock, msg)
         _ = nl.nl_recvmsg(nlsock)
     except AttributeError:
-        raise pyric.error(pyric.EINVAL, "Invalid Card")
+        raise EnvironmentError(EINVAL, "Invalid Card")
     except nl.error as e:
-        raise pyric.error(e.errno, e.strerror)
+        raise EnvironmentError(e.errno, e.strerror)
 
 
 def ifaces(card: Card, nlsock: Optional[nl.NLSocket] = None) -> List[Tuple[Card, str]]:
@@ -1389,9 +1391,9 @@ def ifaces(card: Card, nlsock: Optional[nl.NLSocket] = None) -> List[Tuple[Card,
             if info["card"].phy == card.phy:
                 ifs.append((info["card"], info["mode"]))
         except AttributeError:
-            raise pyric.error(pyric.EINVAL, "Invalid Card")
+            raise EnvironmentError(EINVAL, "Invalid Card")
         except nl.error as e:
-            raise pyric.error(e.errno, e.strerror)
+            raise EnvironmentError(e.errno, e.strerror)
     return ifs
 
 
@@ -1419,17 +1421,17 @@ def devset(card: Card, ndev, nlsock: Optional[nl.NLSocket] = None) -> Card:
         phy = card.phy
         devdel(card, nlsock)
         new = phyadd(phy, ndev, mode, None, nlsock)
-    except pyric.error:
+    except EnvironmentError:
         # try and restore the system i.e. delete new if possible
         if new:
             try:
                 devdel(new, nlsock)
-            except pyric.error:
+            except EnvironmentError:
                 pass
         if not validcard(card):
             try:
                 pass
-            except pyric.error:
+            except EnvironmentError:
                 pass
         raise
     return new
@@ -1452,15 +1454,15 @@ def devadd(
     .. warning: Requires root privileges
     """
     if iswireless(vdev):
-        raise pyric.error(pyric.ENOTUNIQ, "{0} already exists".format(vdev))
+        raise EnvironmentError(ENOTUNIQ, f"{vdev} already exists")
     if mode not in IFTYPES:
-        raise pyric.error(pyric.EINVAL, "Invalid mode")
+        raise EnvironmentError(EINVAL, "Invalid mode")
     if flags and mode != "monitor":
-        raise pyric.error(pyric.EINVAL, "Can only set flags in monitor mode")
+        raise EnvironmentError(EINVAL, "Can only set flags in monitor mode")
     if flags:
         for flag in flags:
             if flag not in MNTRFLAGS:
-                raise pyric.error(pyric.EINVAL, "Invalid flag: {0}".format(flag))
+                raise EnvironmentError(EINVAL, f"Invalid flag: {flag}")
     else:
         flags = []
     if nlsock is None:
@@ -1486,9 +1488,9 @@ def devadd(
         nl.nl_sendmsg(nlsock, msg)
         rmsg = nl.nl_recvmsg(nlsock)  # success returns new device attributes
     except AttributeError as e:
-        raise pyric.error(pyric.EINVAL, e)
+        raise EnvironmentError(EINVAL, e)
     except nl.error as e:
-        raise pyric.error(e.errno, e.strerror)
+        raise EnvironmentError(e.errno, e.strerror)
 
     # return the new Card with info from the results msg
     return Card(
@@ -1518,9 +1520,9 @@ def devdel(card: Card, nlsock: Optional[nl.NLSocket] = None) -> None:
         nl.nl_sendmsg(nlsock, msg)
         _ = nl.nl_recvmsg(nlsock)
     except AttributeError:
-        raise pyric.error(pyric.EINVAL, "Invalid Card")
+        raise EnvironmentError(EINVAL, "Invalid Card")
     except nl.error as e:
-        raise pyric.error(e.errno, e.strerror)
+        raise EnvironmentError(e.errno, e.strerror)
 
 
 def phyadd(
@@ -1540,13 +1542,13 @@ def phyadd(
     .. warning: Requires root privileges.
     """
     if mode not in IFTYPES:
-        raise pyric.error(pyric.EINVAL, "Invalid mode")
+        raise EnvironmentError(EINVAL, "Invalid mode")
     if flags:
         if mode != "monitor":
-            raise pyric.error(pyric.EINVAL, "Can only set flags in monitor mode")
+            raise EnvironmentError(EINVAL, "Can only set flags in monitor mode")
         for flag in flags:
             if flag not in MNTRFLAGS:
-                raise pyric.error(pyric.EINVAL, "Invalid flag: {0}".format(flag))
+                raise EnvironmentError(EINVAL, f"Invalid flag: {flag}")
     else:
         flags = []
     if nlsock is None:
@@ -1572,9 +1574,9 @@ def phyadd(
         nl.nl_sendmsg(nlsock, msg)
         rmsg = nl.nl_recvmsg(nlsock)  # success returns new device attributes
     except AttributeError as e:
-        raise pyric.error(pyric.EINVAL, e)
+        raise EnvironmentError(EINVAL, e)
     except nl.error as e:
-        raise pyric.error(e.errno, e.strerror)
+        raise EnvironmentError(e.errno, e.strerror)
 
     # get card & determine if we got a card with the specified name
     return Card(
@@ -1628,9 +1630,9 @@ def connect(
         if not nl.nl_recvmsg(nlsock) == nlh.NLE_SUCCESS:
             return False
     except AttributeError:
-        raise pyric.error(pyric.EINVAL, "Invalid Card")
+        raise EnvironmentError(EINVAL, "Invalid Card")
     except nl.error as e:
-        raise pyric.error(e.errno, e.strerror)
+        raise EnvironmentError(e.errno, e.strerror)
     return True
 
 
@@ -1654,9 +1656,9 @@ def disconnect(card: Card, nlsock: Optional[nl.NLSocket] = None) -> None:
         nl.nl_sendmsg(nlsock, msg)
         _ = nl.nl_recvmsg(nlsock)
     except AttributeError:
-        raise pyric.error(pyric.EINVAL, "Invalid Card")
+        raise EnvironmentError(EINVAL, "Invalid Card")
     except nl.error as e:
-        raise pyric.error(e.errno, e.strerror)
+        raise EnvironmentError(e.errno, e.strerror)
 
 
 def link(card: Card, nlsock: Optional[nl.NLSocket] = None) -> Dict[str, Any]:
@@ -1705,9 +1707,9 @@ def link(card: Card, nlsock: Optional[nl.NLSocket] = None) -> Dict[str, Any]:
         nl.nl_sendmsg(nlsock, msg)
         rmsg = nl.nl_recvmsg(nlsock)
     except AttributeError:
-        raise pyric.error(pyric.EINVAL, "Invalid Card")
+        raise EnvironmentError(EINVAL, "Invalid Card")
     except nl.error as e:
-        raise pyric.error(e.errno, e.strerror)
+        raise EnvironmentError(e.errno, e.strerror)
 
     # link returns multiple attributes but we are only concerned w/ @NL80211_ATTR_BSS
     # some cards (my integrated intel) do not parse correctly
@@ -1840,9 +1842,9 @@ def stainfo(
         nl.nl_sendmsg(nlsock, msg)
         rmsg = nl.nl_recvmsg(nlsock)
     except AttributeError:
-        raise pyric.error(pyric.EINVAL, "Invalid Card")
+        raise EnvironmentError(EINVAL, "Invalid Card")
     except nl.error as e:
-        raise pyric.error(e.errno, e.strerror)
+        raise EnvironmentError(e.errno, e.strerror)
 
     # we are only concerned w/ @NL80211_ATTR_STA_INFO
     info = {
@@ -1923,9 +1925,9 @@ def _mac2hex_(v: str):
     try:
         return struct.pack("6B", *[int(x, 16) for x in v.split(":")])
     except AttributeError:
-        raise pyric.error(pyric.EINVAL, "Mac address is not valid")
+        raise EnvironmentError(EINVAL, "Mac address is not valid")
     except struct.error:
-        raise pyric.error(pyric.EINVAL, "Mac address is not 6 octets")
+        raise EnvironmentError(EINVAL, "Mac address is not 6 octets")
 
 
 def _validip4_(addr):
@@ -2001,11 +2003,11 @@ def _flagsget_(dev, iosock: Optional[socket.socket] = None):
         ret = io.io_transfer(iosock, flag, ifh.ifreq(dev, flag))
         return struct.unpack_from(ifh.ifr_flags, ret, ifh.IFNAMELEN)[0]
     except AttributeError as e:
-        raise pyric.error(pyric.EINVAL, e)
+        raise EnvironmentError(EINVAL, e)
     except struct.error as e:
-        raise pyric.error(pyric.EUNDEF, "Error parsing results: {0}".format(e))
+        raise EnvironmentError(EUNDEF, f"Error parsing results: {e}")
     except io.error as e:
-        raise pyric.error(e.errno, e.strerror)
+        raise EnvironmentError(e.errno, e.strerror)
 
 
 def _flagsset_(dev, flags, iosock: Optional[socket.socket] = None):
@@ -2024,11 +2026,11 @@ def _flagsset_(dev, flags, iosock: Optional[socket.socket] = None):
         ret = io.io_transfer(iosock, flag, ifh.ifreq(dev, flag, [flags]))
         return struct.unpack_from(ifh.ifr_flags, ret, ifh.IFNAMELEN)[0]
     except AttributeError as e:
-        raise pyric.error(pyric.EINVAL, e)
+        raise EnvironmentError(EINVAL, e)
     except struct.error as e:
-        raise pyric.error(pyric.EUNDEF, "Error parsing results: {0}".format(e))
+        raise EnvironmentError(EUNDEF, f"Error parsing results: {e}")
     except io.error as e:
-        raise pyric.error(e.errno, e.strerror)
+        raise EnvironmentError(e.errno, e.strerror)
 
 
 #### ADDITIONAL PARSING FOR PHYINFO ####
@@ -2295,9 +2297,9 @@ def _ifindex_(dev, iosock: Optional[socket.socket] = None):
         ret = io.io_transfer(iosock, flag, ifh.ifreq(dev, flag))
         return struct.unpack_from(ifh.ifr_ifindex, ret, ifh.IFNAMELEN)[0]
     except AttributeError as e:
-        raise pyric.error(pyric.EINVAL, e)
+        raise EnvironmentError(EINVAL, e)
     except struct.error as e:
-        raise pyric.error(pyric.EUNDEF, "Error parsing results: {0}".format(e))
+        raise EnvironmentError(EUNDEF, f"Error parsing results: {e}")
 
 
 def _familyid_(nlsock: nl.NLSocket):
@@ -2345,8 +2347,8 @@ def _iostub_(fct, *argv):
         argv = list(argv) + [iosock]
         return fct(*argv)
     except io.error as e:
-        raise pyric.error(e.errno, pyric.strerror(e.errno))
-    except pyric.error:
+        raise EnvironmentError(e.errno, strerror(e.errno))
+    except EnvironmentError:
         raise  # catch and rethrow
     finally:
         io.io_socket_free(iosock)
@@ -2365,8 +2367,8 @@ def _nlstub_(fct, *argv):
         argv = list(argv) + [nlsock]
         return fct(*argv)
     except nl.error as e:
-        raise pyric.error(e.errno, pyric.strerror(e.errno))
-    except pyric.error:
+        raise EnvironmentError(e.errno, strerror(e.errno))
+    except EnvironmentError:
         raise
     finally:
         if nlsock:
@@ -2388,9 +2390,9 @@ def _fut_chset(card: Card, ch, chw, nlsock: Optional[nl.NLSocket] = None):
      NOTE: This only works for cards in monitor mode
     """
     if ch not in channels.channels():
-        raise pyric.error(pyric.EINVAL, "Invalid channel")
+        raise EnvironmentError(EINVAL, "Invalid channel")
     if chw not in channels.CHTYPES:
-        raise pyric.error(pyric.EINVAL, "Invalid channel width")
+        raise EnvironmentError(EINVAL, "Invalid channel width")
     if nlsock is None:
         return _nlstub_(_fut_chset, card, ch, chw)
 
@@ -2408,6 +2410,6 @@ def _fut_chset(card: Card, ch, chw, nlsock: Optional[nl.NLSocket] = None):
         nl.nl_sendmsg(nlsock, msg)
         _ = nl.nl_recvmsg(nlsock)
     except AttributeError:
-        raise pyric.error(pyric.EINVAL, "Invalid Card")
+        raise EnvironmentError(EINVAL, "Invalid Card")
     except nl.error as e:
-        raise pyric.error(e.errno, e.strerror)
+        raise EnvironmentError(e.errno, e.strerror)
