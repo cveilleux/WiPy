@@ -88,6 +88,7 @@ import pyric.lib.libio as io  # ioctl (library) functions
 import os
 import socket
 from typing import List, Tuple, Union, Dict, Any, Optional
+from dataclasses import dataclass
 
 _FAM80211ID_ = None
 
@@ -237,34 +238,19 @@ def regset(rd: str, nlsock: Optional[nl.NLSocket] = None):
 ################################################################################
 
 
-class Card(tuple):
+@dataclass(frozen=True)
+class Card:
     """A wireless network interface controller.
     
-    It is a Wrapper around a tuple
-    t = (physical index,device name, interface index)
     Exposes the following properties: (callable by '.'):
         phy: physical index
         dev: device name
         idx: interface index (ifindex)
     """
 
-    def __new__(cls, p: int, d: str, i: int):
-        return super(Card, cls).__new__(cls, tuple((p, d, i)))
-
-    def __repr__(self) -> str:
-        return "Card(phy={0},dev={1},ifindex={2})".format(self.phy, self.dev, self.idx)
-
-    @property
-    def phy(self) -> int:
-        return self[0]
-
-    @property
-    def dev(self) -> str:
-        return self[1]
-
-    @property
-    def idx(self) -> int:
-        return self[2]
+    phy: int
+    dev: str
+    idx: int
 
 
 def getcard(dev: str, nlsock: Optional[nl.NLSocket] = None) -> Card:
