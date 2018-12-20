@@ -119,8 +119,8 @@ RETRY_MAX = 255
 """ RTS THRESH limits IAW Std dot11RTSTHRESH definition pg 2133 """
 RTS_THRESH_MIN = 0
 RTS_THRESH_MAX = 65536
-RTS_THRESH_OFF = 4294967295  # (2^32 -1 or the max value of a u32)
+RTS_THRESH_OFF = 4_294_967_295  # (2^32 -1 or the max value of a u32)
 """ Fragmentation THRESH limits IAW Std dot11FragmentTHRESH def. pg 2133 """
 FRAG_THRESH_MIN = 256
 FRAG_THRESH_MAX = 8000
-FRAG_THRESH_OFF = 4294967295  # (2^32 -1 or the max value of a u32)
+FRAG_THRESH_OFF = 4_294_967_295  # (2^32 -1 or the max value of a u32)

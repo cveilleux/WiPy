@@ -30,4 +30,3 @@ def test_interfaces_two_interfaces():
 def test_interfaces_no_interface():
     """Test interfaces function when no interfaces are available."""
     assert interfaces() == []
-

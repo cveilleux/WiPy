@@ -881,7 +881,7 @@ def _maxbufsz_():
         return int(fin.read().strip()) / 2
     except (IOError, ValueError):
         # return a hardcoded value
-        return 2097152
+        return 2_097_152
     finally:
         if fin:
             fin.close()
