@@ -243,7 +243,7 @@ def regset(rd: str, nlsock: Optional[nl.NLSocket] = None):
 @dataclass(frozen=True)
 class Card:
     """A wireless network interface controller.
-    
+ 
     Exposes the following properties: (callable by '.'):
         phy: physical index
         dev: device name
