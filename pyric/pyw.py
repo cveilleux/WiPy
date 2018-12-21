@@ -105,21 +105,27 @@ TXPWRSETTINGS = nl80211h.NL80211_TX_POWER_SETTINGS
 
 
 def interfaces() -> List[str]:
-    """Return all network interfaces."""
-    fin = None
-    try:
-        # read in devices from /proc/net/dev. After splitting on newlines, the
-        # first 2 lines are headers and the last line is empty so we remove them
-        fin = open(hw.dpath, "r")
-        ds = fin.read().split("\n")[2:-1]
-    except IOError:
-        return []
-    finally:
-        if fin:
-            fin.close()
+    """Return all connected network interfaces.
+    
+    Find all the connected interfaces by parsing the /proc/net/dev file.
 
-    # the remaining lines are <dev>: p1 p2 ... p3, split on ':' & strip whitespace
-    return [d.split(":")[0].strip() for d in ds]
+    :returns: a list of all the connected interfaces.
+    :raises OSError: when the file is not found.
+    """
+    all_interfaces: List[str] = []
+
+    with open(hw.dpath) as dev_file:
+        for line in dev_file:
+            # the file format is an interface_name followed by a colon
+            colon = line.find(":")
+
+            if colon > 0:
+                # left strip is needed because some of the interface names
+                # are not always at the start of the line
+                interface = line[:colon].lstrip()
+                all_interfaces.append(interface)
+
+    return all_interfaces
 
 
 def isinterface(dev: str) -> bool:

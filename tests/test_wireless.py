@@ -1,5 +1,5 @@
-from pyric.pyw import interfaces
 from unittest.mock import patch, mock_open
+from pyric.pyw import interfaces
 
 
 @patch(
