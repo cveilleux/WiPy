@@ -69,27 +69,29 @@ NOTE:
 
 """
 
-import struct  # ioctl unpacking
-import re  # check addr validity
-from pyric.nlhelp.nlsearch import cmdbynum  # get command name
-import pyric.utils.channels as channels  # channel related
-import pyric.utils.rfkill as rfkill  # block/unblock
+import os
+import re
+import socket
+import struct
+from dataclasses import dataclass
+from errno import EADDRNOTAVAIL, EAFNOSUPPORT, EINVAL, ENODEV, ENOENT, ENONET, ENOTDIR
+from os import strerror
+from typing import Any, Dict, List, Optional, Tuple, Union
+
+import pyric.lib.libio as io  # ioctl (library) functions
+import pyric.lib.libnl as nl  # netlink (library) functions
+import pyric.net.genetlink_h as genlh  # genetlink definition
+import pyric.net.if_h as ifh  # ifreq structure
+import pyric.net.netlink_h as nlh  # netlink definition
+import pyric.net.sockios_h as sioch  # sockios constants
+import pyric.net.wireless.nl80211_h as nl80211h  # nl80211 definition
+import pyric.net.wireless.wlan as wlan  # IEEE 802.11 Std definition
 import pyric.utils.hardware as hw  # device related
 import pyric.utils.ouifetch as ouifetch  # get oui dict
-import pyric.net.netlink_h as nlh  # netlink definition
-import pyric.net.genetlink_h as genlh  # genetlink definition
-import pyric.net.wireless.nl80211_h as nl80211h  # nl80211 definition
-import pyric.lib.libnl as nl  # netlink (library) functions
-import pyric.net.wireless.wlan as wlan  # IEEE 802.11 Std definition
-import pyric.net.sockios_h as sioch  # sockios constants
-import pyric.net.if_h as ifh  # ifreq structure
-import pyric.lib.libio as io  # ioctl (library) functions
-import os
-import socket
-from typing import List, Tuple, Union, Dict, Any, Optional
-from dataclasses import dataclass
-from os import strerror
-from errno import EINVAL, ENOTDIR, ENONET, ENODEV, EADDRNOTAVAIL, ENOENT, EAFNOSUPPORT
+import pyric.utils.rfkill as rfkill  # block/unblock
+
+from .nlhelp.nlsearch import cmdbynum
+from .utils.channels import CHTYPES, ch2rf, channels, freqs, rf2ch
 
 EUNDEF = -1  # undefined error
 _FAM80211ID_ = None
@@ -930,7 +932,7 @@ def devchs(card: Card, nlsock: Optional[nl.NLSocket] = None) -> List:
     """
     if nlsock is None:
         return _nlstub_(devchs, card)
-    return [channels.rf2ch(rf) for rf in devfreqs(card, nlsock)]
+    return [rf2ch(rf) for rf in devfreqs(card, nlsock)]
 
 
 def devstds(card: Card, nlsock: Optional[nl.NLSocket] = None) -> List[str]:
@@ -1081,7 +1083,7 @@ def devinfo(card: Union[Card, str], nlsock: Optional[nl.NLSocket] = None):
 
     # convert CHW to string version
     try:
-        info["CHW"] = channels.CHTYPES[info["CHW"]]
+        info["CHW"] = CHTYPES[info["CHW"]]
     except (IndexError, TypeError):  # invalid index and NoneType
         info["CHW"] = None
     return info
@@ -1256,7 +1258,7 @@ def chget(card: Card, nlsock: Optional[nl.NLSocket] = None):
     """
     if nlsock is None:
         return _nlstub_(chget, card)
-    return channels.rf2ch(devinfo(card, nlsock)["RF"])
+    return rf2ch(devinfo(card, nlsock)["RF"])
 
 
 def chset(
@@ -1273,7 +1275,7 @@ def chset(
     """
     if nlsock is None:
         return _nlstub_(chset, card, ch, chw)
-    return freqset(card, channels.ch2rf(ch), chw, nlsock)
+    return freqset(card, ch2rf(ch), chw, nlsock)
 
 
 def freqget(card: Card, nlsock: Optional[nl.NLSocket] = None):
@@ -1303,7 +1305,7 @@ def freqset(
         return _nlstub_(freqset, card, rf, chw)
 
     try:
-        chw = channels.CHTYPES.index(chw)
+        chw = CHTYPES.index(chw)
         msg = nl.nlmsg_new(
             nltype=_familyid_(nlsock),
             cmd=nl80211h.NL80211_CMD_SET_WIPHY,
@@ -2193,7 +2195,7 @@ def _unparsed_rf_(band):
      :returns: list of supported frequencies
     """
     rfs = []
-    for freq in channels.freqs():
+    for freq in freqs():
         if band.find(struct.pack("I", freq)) != -1:
             rfs.append(freq)
     return rfs
@@ -2395,9 +2397,9 @@ def _fut_chset(card: Card, ch, chw, nlsock: Optional[nl.NLSocket] = None):
      uses *_SET_WIPHY however, ATT does not work raise Errno 22 Invalid Argument
      NOTE: This only works for cards in monitor mode
     """
-    if ch not in channels.channels():
+    if ch not in channels():
         raise EnvironmentError(EINVAL, "Invalid channel")
-    if chw not in channels.CHTYPES:
+    if chw not in CHTYPES:
         raise EnvironmentError(EINVAL, "Invalid channel width")
     if nlsock is None:
         return _nlstub_(_fut_chset, card, ch, chw)
@@ -2409,9 +2411,9 @@ def _fut_chset(card: Card, ch, chw, nlsock: Optional[nl.NLSocket] = None):
             flags=nlh.NLM_F_REQUEST | nlh.NLM_F_ACK,
         )
         nl.nla_put_u32(msg, card.idx, nl80211h.NL80211_ATTR_IFINDEX)
-        nl.nla_put_u32(msg, channels.ch2rf(ch), nl80211h.NL80211_ATTR_WIPHY_FREQ)
+        nl.nla_put_u32(msg, ch2rf(ch), nl80211h.NL80211_ATTR_WIPHY_FREQ)
         nl.nla_put_u32(
-            msg, channels.CHTYPES.index(chw), nl80211h.NL80211_ATTR_WIPHY_CHANNEL_TYPE
+            msg, CHTYPES.index(chw), nl80211h.NL80211_ATTR_WIPHY_CHANNEL_TYPE
         )
         nl.nl_sendmsg(nlsock, msg)
         _ = nl.nl_recvmsg(nlsock)
