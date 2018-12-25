@@ -74,7 +74,16 @@ import re
 import socket
 import struct
 from dataclasses import dataclass
-from errno import EADDRNOTAVAIL, EAFNOSUPPORT, EINVAL, ENODEV, ENOENT, ENONET, ENOTDIR
+from errno import (
+    EADDRNOTAVAIL,
+    EAFNOSUPPORT,
+    EINVAL,
+    ENODEV,
+    ENOENT,
+    ENONET,
+    ENOTDIR,
+    EPROTONOSUPPORT,
+)
 from os import strerror
 from typing import Any, Dict, List, Optional, Tuple, Union
 
@@ -226,6 +235,7 @@ from .net.wireless.nl80211_h import (
     NL80211_STA_INFO_TX_RETRIES,
     NL80211_TX_POWER_AUTOMATIC,
     NL80211_TX_POWER_SETTINGS,
+    NL80211_CMD_GET_WIPHY,
 )
 from .net.wireless.wlan import (
     COV_CLASS_MAX,
