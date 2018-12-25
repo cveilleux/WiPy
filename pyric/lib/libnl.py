@@ -393,7 +393,9 @@ class GENLMsg(dict):
     @nltype.setter
     def nltype(self, v):
         if v < 0:
-            raise EnvironmentError(errno.ERANGE, "Netlink type {0} is invalid".format(v))
+            raise EnvironmentError(
+                errno.ERANGE, "Netlink type {0} is invalid".format(v)
+            )
         self["type"] = v
 
     @property
