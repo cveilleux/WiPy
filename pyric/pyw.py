@@ -269,7 +269,7 @@ TXPWRSETTINGS = NL80211_TX_POWER_SETTINGS
 
 def interfaces() -> List[str]:
     """Return all connected network interfaces.
-    
+
     Find all the connected interfaces by parsing the /proc/net/dev file.
 
     :returns: a list of all the connected interfaces.
@@ -2047,8 +2047,8 @@ def stainfo(card: Card, mac: str, nlsock: Optional[NLSocket] = None) -> Dict[str
 #### FILE PRIVATE                                                           ####
 ################################################################################
 
-IPADDR = re.compile("^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$")  # re for ip addr
-MACADDR = re.compile("^([0-9a-fA-F]{2}:){5}([0-9a-fA-F]{2})$")  # re for mac addr
+IPADDR = re.compile(r"^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$")  # re for ip addr
+MACADDR = re.compile(r"^([0-9a-fA-F]{2}:){5}([0-9a-fA-F]{2})$")  # re for mac addr
 
 
 def _hex2ip4_(v):
