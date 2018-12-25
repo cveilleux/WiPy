@@ -53,10 +53,6 @@ import sys
 _PY3_ = sys.version_info.major == 3
 
 
-class error(EnvironmentError):
-    pass
-
-
 BUFSZ = 32768  # Generic default buffersize
 """
 NETLINK SOCKET
@@ -99,7 +95,7 @@ class NLSocket(dict):
     @tx.setter
     def tx(self, v):
         if v < 128 or v > _maxbufsz_():
-            raise error(errno.EINVAL, "Invalid buffer size")
+            raise EnvironmentError(errno.EINVAL, "Invalid buffer size")
         self["sock"].setsockopt(socket.SOL_SOCKET, socket.SO_SNDBUF, v)
 
     @property
@@ -109,7 +105,7 @@ class NLSocket(dict):
     @rx.setter
     def rx(self, v):
         if v < 128 or v > _maxbufsz_():
-            raise error(errno.EINVAL, "Invalid buffer size")
+            raise EnvironmentError(errno.EINVAL, "Invalid buffer size")
         self["sock"].setsockopt(socket.SOL_SOCKET, socket.SO_RCVBUF, v)
 
     @property
@@ -119,7 +115,7 @@ class NLSocket(dict):
     @pid.setter
     def pid(self, v):
         if v < 1:
-            raise error(errno.EINVAL, "Invalid port id")
+            raise EnvironmentError(errno.EINVAL, "Invalid port id")
         self["pid"] = v
 
     @property
@@ -137,7 +133,7 @@ class NLSocket(dict):
     @seq.setter
     def seq(self, v):
         if v < 1:
-            raise error(errno.EINVAL, "Invalid sequence number")
+            raise EnvironmentError(errno.EINVAL, "Invalid sequence number")
         self["seq"] = v
 
     @property
@@ -147,7 +143,7 @@ class NLSocket(dict):
     @timeout.setter
     def timeout(self, v):
         if v and v < 0:
-            raise error(errno.EINVAL, "Invalid timeout value")
+            raise EnvironmentError(errno.EINVAL, "Invalid timeout value")
         self["sock"].settimeout(v)
 
     #### wrap socket functions
@@ -196,10 +192,10 @@ def nl_socket_alloc(
     # set & validate paramaters
     pid = pid or getpid() + int(time())  # allow multiple sockets on this host
     if pid < 1:
-        raise error(errno.EINVAL, "Invalid port id")
+        raise EnvironmentError(errno.EINVAL, "Invalid port id")
     seq = seq or int(time())
     if seq < 1:
-        raise error(errno.EINVAL, "Invalid sequence number")
+        raise EnvironmentError(errno.EINVAL, "Invalid sequence number")
     rx = rx or BUFSZ
     if rx < 128 or rx > _maxbufsz_():
         raise error(errno.EINVAL, "Invalid rx size")
@@ -215,7 +211,7 @@ def nl_socket_alloc(
         s.settimeout(timeout)
         s.bind((pid, grps))
     except socket.error as e:
-        raise error(e.errno, e.strerror)
+        raise EnvironmentError(e.errno, e.strerror)
     return NLSocket(
         {"sock": s, "tx": tx, "rx": rx, "pid": pid, "grpm": grps, "seq": seq}
     )
@@ -258,9 +254,9 @@ def nl_sendmsg(sock, msg, override=False):
         msg.flags = msg.flags | nlh.NLM_F_ACK
         sent = sock.send(msg.tostream())
         if sent != msg.len:
-            raise error(errno.EBADMSG, "Message sent incomplete")
+            raise EnvironmentError(errno.EBADMSG, "Message sent incomplete")
     except socket.error as e:
-        raise error(errno.ECOMM, e)
+        raise EnvironmentError(errno.ECOMM, e)
     except AttributeError:
         raise error(errno.ENOTSOCK, "Invalid netlink socket")
 
@@ -278,20 +274,20 @@ def nl_recvmsg(sock):
         try:
             # catch the follow on ack
             _ = nlmsg_fromstream(sock.recv())
-        except error as e:
+        except EnvironmentError as e:
             # on success, just return the orginal message
             if e.errno == nlh.NLE_SUCCESS:
                 pass
             else:
                 raise
         if sock.seq != msg.seq:
-            raise error(errno.EBADMSG, "Seq. # out of order")
+            raise EnvironmentError(errno.EBADMSG, "Seq. # out of order")
         return msg
     except socket.timeout:
-        raise error(-1, "Socket timed out")
+        raise EnvironmentError(-1, "Socket timed out")
     # except socket.error as e: # this became in issue in python 3
     #    raise error(errno.ENOTSOCK,e)
-    except error as e:
+    except EnvironmentError as e:
         if e.errno == nlh.NLE_SUCCESS:
             return nlh.NLE_SUCCESS
         raise  # rethrow
@@ -397,7 +393,7 @@ class GENLMsg(dict):
     @nltype.setter
     def nltype(self, v):
         if v < 0:
-            raise error(errno.ERANGE, "Netlink type {0} is invalid".format(v))
+            raise EnvironmentError(errno.ERANGE, "Netlink type {0} is invalid".format(v))
         self["type"] = v
 
     @property
@@ -415,7 +411,7 @@ class GENLMsg(dict):
     @seq.setter
     def seq(self, v):
         if v < 1:
-            raise error(errno.ERANGE, "Invalid seq. number")
+            raise EnvironmentError(errno.ERANGE, "Invalid seq. number")
         self["seq"] = v
 
     @property
@@ -425,7 +421,7 @@ class GENLMsg(dict):
     @pid.setter
     def pid(self, v):
         if v < 1:
-            raise error(errno.ERANGE, "Invalid port id")
+            raise EnvironmentError(errno.ERANGE, "Invalid port id")
         self["pid"] = v
 
     @property
@@ -435,7 +431,7 @@ class GENLMsg(dict):
     @cmd.setter
     def cmd(self, v):
         if v < 0:
-            raise error(errno.ERANGE, "Invalid cmd")
+            raise EnvironmentError(errno.ERANGE, "Invalid cmd")
         self["cmd"] = v
 
     @property
@@ -458,7 +454,7 @@ class GENLMsg(dict):
                 payload += _attrpack_(a, v, d)
             except (TypeError, AttributeError, struct.error) as e:
                 # if d == nlh.NLA_NESTED: pass # we need to fix here
-                raise error(-1, "Packing {0} {1}: {2}".format(a, v, e))
+                raise EnvironmentError(-1, "Packing {0} {1}: {2}".format(a, v, e))
         return (
             nlh.nlmsghdr(len(payload), self.nltype, self.flags, self.seq, self.pid)
             + payload
@@ -505,10 +501,10 @@ def nlmsg_fromstream(stream, override=False):
         if t == nlh.NLMSG_ERROR or (l == nlh.NLMSGACKLEN and not override):
             # have an (possible) ack/nack i.e. error msg
             e = struct.unpack_from(nlh.nl_nlmsgerr, stream, nlh.NLMSGHDRLEN)[0]
-            raise error(abs(e), strerror(abs(e)))
+            raise EnvironmentError(abs(e), strerror(abs(e)))
         c, _, _ = struct.unpack_from(genlh.genl_genlmsghdr, stream, nlh.NLMSGHDRLEN)
     except struct.error as e:
-        raise error(-1, "Error parsing headers: {0}".format(e))
+        raise EnvironmentError(-1, "Error parsing headers: {0}".format(e))
 
     # create a new message with hdr values then parse the attributes
     msg = nlmsg_new(t, c, s, p, fs)
@@ -576,13 +572,13 @@ def nla_parse(msg, l, mtype, stream, idx):
             nla_put(msg, a, atype, dt)
         except struct.error:  # append as Error, stripping null bytes
             nla_put(msg, _nla_strip_(a), atype, nlh.NLA_ERROR)
-        except error as e:
+        except EnvironmentError as e:
             if e.errno == errno.EINVAL:  # a nested or set failed to parse correctly
                 nla_put(msg, _nla_strip_(a), atype, nlh.NLA_ERROR)
             else:
                 raise
         except MemoryError as e:  # hopefully don't get here
-            raise error(
+            raise EnvironmentError(
                 -1, "Attr type {0} of pol {1} failed: {2}".format(atype, pol, e)
             )
         idx = nlh.NLMSG_ALIGN(idx + alen)  # move index to next attr
@@ -636,7 +632,7 @@ def nla_parse_nested(nested):
         # include pad byte(s) affixed to end for proper alignment
         alen = struct.unpack_from("H", nested, idx)[0]
         if alen == 0:
-            raise error(errno.EINVAL, "Invalid nesting")
+            raise EnvironmentError(errno.EINVAL, "Invalid nesting")
         # ns.append(nested[idx+2:idx+alen]) # don't include the length bytes
         nattr = nested[idx + 2 : idx + alen]
         ns.append((struct.unpack_from("H", nattr, 0)[0], nattr[2:]))
@@ -661,7 +657,7 @@ def nla_parse_set(aset, etype):
     elif etype == nlh.NLA_U64:
         fmt = "Q"
     else:
-        raise error(errno.EINVAL, "Set elements are not valid datatype")
+        raise EnvironmentError(errno.EINVAL, "Set elements are not valid datatype")
     esize = struct.calcsize(fmt)
 
     ss = []
@@ -675,7 +671,7 @@ def nla_parse_set(aset, etype):
             ss.append(s)
             idx += esize
         except struct.error:
-            raise error(errno.EINVAL, "Set elements failed to unpack")
+            raise EnvironmentError(errno.EINVAL, "Set elements failed to unpack")
     return ss
 
 
@@ -688,7 +684,7 @@ def nla_put(msg, v, a, d):
      :param d: attribute datatype
     """
     if d > nlh.NLA_TYPE_MAX:
-        raise error(errno.ERANGE, "Value type is invalid")
+        raise EnvironmentError(errno.ERANGE, "Value type is invalid")
     msg["attrs"].append((a, v, d))
 
 
