@@ -87,7 +87,7 @@ from errno import (
 from os import strerror
 from typing import Any, Dict, List, Optional, Tuple, Union
 
-from .lib.libio import io_socket_free, io_transfer
+from .lib.libio import io_socket_free, io_transfer, io_socket_alloc
 from .lib.libnl import (
     NLSocket,
     nl_recvmsg,
