@@ -302,8 +302,18 @@ def interfaces() -> List[str]:
 
 
 def isinterface(dev: str) -> bool:
-    """Return whether device is a network card."""
-    return dev in interfaces()
+    """Return whether device is a network card.
+
+    Find if dev is in the /proc/net/dev file which is the list of
+    connected interfaces.
+
+    :raises OSError: when the file is not found.
+    """
+    with open(dpath) as dev_file:
+        for line in dev_file:
+            if dev in line:
+                return True
+        return False
 
 
 def winterfaces(iosock: Optional[socket.socket] = None) -> List[str]:
