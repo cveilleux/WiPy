@@ -77,11 +77,13 @@ from dataclasses import dataclass
 from errno import (
     EADDRNOTAVAIL,
     EAFNOSUPPORT,
+    EBUSY,
     EINVAL,
     ENODEV,
     ENOENT,
     ENONET,
     ENOTDIR,
+    ENOTUNIQ,
     EPROTONOSUPPORT,
 )
 from os import strerror
@@ -116,6 +118,7 @@ from .net.if_h import (
     IFF_UP,
     IFNAMELEN,
     ifr_flags,
+    ifr_ifindex,
     ifr_iwtxpwr,
     ifreq,
     sa_addr,
@@ -2580,7 +2583,7 @@ def _fut_chset(card: Card, ch, chw, nlsock: Optional[NLSocket] = None):
         nla_put_u32(msg, ch2rf(ch), NL80211_ATTR_WIPHY_FREQ)
         nla_put_u32(msg, CHTYPES.index(chw), NL80211_ATTR_WIPHY_CHANNEL_TYPE)
         nl_sendmsg(nlsock, msg)
-        _ = unl_recvmsg(nlsock)
+        _ = nl_recvmsg(nlsock)
     except AttributeError:
         raise EnvironmentError(EINVAL, "Invalid Card")
     except EnvironmentError as e:
