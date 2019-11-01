@@ -47,6 +47,7 @@ from binascii import hexlify
 import errno
 import pyric.net.netlink_h as nlh
 import pyric.net.genetlink_h as genlh
+from pyric import error
 from pyric.net.policy import nla_datatype
 import sys
 
