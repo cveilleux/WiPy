@@ -754,7 +754,7 @@ def nla_putat(msg, i, v, a, d):
      :param d: attribute datatype
     """
     if d > nlh.NLA_TYPE_MAX:
-        raise error(errno.ERANGE, "Invalid datatype")
+        raise pyric.error(errno.ERANGE, "Invalid datatype")
     msg["attrs"][i] = (a, v, d)
 
 
