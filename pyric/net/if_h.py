@@ -121,9 +121,8 @@ IFF_TX_SKB_SHARING = 0x10000  # The interface supports sharing skbs on transmit
 IFF_UNICAST_FLT = 0x20000  # Supports unicast filtering
 IFF_TEAM_PORT = 0x40000  # device used as team port
 IFF_SUPP_NOFCS = 0x80000  # device supports sending custom FCS
-IFF_LIVE_ADDR_CHANGE = (
-    0x100000
-)  # device supports hardware address change when it's running
+# device supports hardware address change when it's running
+IFF_LIVE_ADDR_CHANGE = 0x100000 
 IFF_MACVLAN = 0x200000  # Macvlan device
 
 IF_GET_IFACE = 0x0001  # for querying only
