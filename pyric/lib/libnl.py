@@ -45,6 +45,7 @@ import struct
 import socket
 from binascii import hexlify
 import errno
+import pyric
 import pyric.net.netlink_h as nlh
 import pyric.net.genetlink_h as genlh
 from pyric.net.policy import nla_datatype
@@ -198,10 +199,10 @@ def nl_socket_alloc(
         raise EnvironmentError(errno.EINVAL, "Invalid sequence number")
     rx = rx or BUFSZ
     if rx < 128 or rx > _maxbufsz_():
-        raise error(errno.EINVAL, "Invalid rx size")
+        raise pyric.error(errno.EINVAL, "Invalid rx size")
     tx = tx or BUFSZ
     if tx < 128 or tx > _maxbufsz_():
-        raise error(errno.EINVAL, "Invalid tx size")
+        raise pyric.error(errno.EINVAL, "Invalid tx size")
 
     # create the socket and return it
     try:
@@ -258,7 +259,7 @@ def nl_sendmsg(sock, msg, override=False):
     except socket.error as e:
         raise EnvironmentError(errno.ECOMM, e)
     except AttributeError:
-        raise error(errno.ENOTSOCK, "Invalid netlink socket")
+        raise pyric.error(errno.ENOTSOCK, "Invalid netlink socket")
 
 
 def nl_recvmsg(sock):
@@ -286,7 +287,7 @@ def nl_recvmsg(sock):
     except socket.timeout:
         raise EnvironmentError(-1, "Socket timed out")
     # except socket.error as e: # this became in issue in python 3
-    #    raise error(errno.ENOTSOCK,e)
+    #    raise pyric.error(errno.ENOTSOCK,e)
     except EnvironmentError as e:
         if e.errno == nlh.NLE_SUCCESS:
             return nlh.NLE_SUCCESS
@@ -541,7 +542,7 @@ def nla_parse(msg, l, mtype, stream, idx):
             # Note: we use unpack_from which will ignore the null bytes in numeric
             # datatypes & for strings, strip trailing null bytes
             # dt == nlh.NLA_UNSPEC: ignore
-            if _PY3_ and (dt == nlh.NLA_STRING or dt == nlh.NLA_UNSPEC):
+            if _PY3_ and dt in (nlh.NLA_STRING, nlh.NLA_UNSPEC):
                 # python 3 returns a bytes object, convert to string
                 try:
                     a = a.decode("ascii")
@@ -753,7 +754,7 @@ def nla_putat(msg, i, v, a, d):
      :param d: attribute datatype
     """
     if d > nlh.NLA_TYPE_MAX:
-        raise error(errno.ERANGE, "Invalid datatype")
+        raise pyric.error(errno.ERANGE, "Invalid datatype")
     msg["attrs"][i] = (a, v, d)
 
 
